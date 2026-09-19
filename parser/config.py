@@ -36,6 +36,7 @@ class StructError(ConfigError):
 class Config():
     nb_drones: int = -1
     hubs: list[dict[str, tuple[int, int, str, str, int]]] = []
+    hub_names: list[str] = []
     connections: list[tuple[str, str]] = []
 
     colors = [
