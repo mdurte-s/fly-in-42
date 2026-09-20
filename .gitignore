@@ -1,0 +1,8 @@
+# Python Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Type Checking & Testing Caches
+.mypy_cache/
+.pytest_cache/
