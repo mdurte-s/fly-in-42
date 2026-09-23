@@ -1,5 +1,8 @@
+from dataclasses import dataclass, field
+from .hubs import Hub
 from .utils import comment, error
 
+usage = comment("Usage: ./main.py <path/config-file.txt>")
 struct = (f"{comment('Configuration file expected structure:')}\n"
           "\nnb_drones: NB_DRONES"
           "\nstart_hub: NAME X Y [OPTIONAL_CRITERIA]"
@@ -8,13 +11,13 @@ struct = (f"{comment('Configuration file expected structure:')}\n"
           "\nend_hub: NAME X Y [OPTIONAL_CRITERIA]"
           "\nconnection: NAME-NAME [OPTIONAL_CRITERIA]"
           "\n[...]\n"
-          f"{comment('Hub OPTIONAL_CRITERIA: ')}"
-          f"{comment('[zone=ZONE color=COLOR max_drones=MAX_DRONES]')}"
-          f"{comment('Connection OPTIONAL_CRITERIA: ')}"
-          f"{comment('[max_link_capacity=MAX_LINK_CAPACITY]')}")
+          f"{comment('\nHub OPTIONAL_CRITERIA: ')}"
+          f"{comment('\n[zone=ZONE color=COLOR max_drones=MAX_DRONES]')}"
+          f"{comment('\nConnection OPTIONAL_CRITERIA: ')}"
+          f"{comment('\n[max_link_capacity=MAX_LINK_CAPACITY]')}")
 
-hub = "EXPECTED: 'hub: NAME X Y [OPTIONAL_CRITERIA]'"
-connection = "EXPECTED: 'connection: NAME-NAME [OPTIONAL_CRITERIA]'"
+hub = "Expected: 'hub: NAME X Y [OPTIONAL_CRITERIA]'"
+connection = "Expected: 'connection: NAME-NAME [OPTIONAL_CRITERIA]'"
 
 
 class ConfigError(Exception):
@@ -28,16 +31,25 @@ class ConfigError(Exception):
 class StructError(ConfigError):
     """Raised when the STRUCTURE of the configuration file is invalid."""
 
+    def __init__(self, message: str = usage) -> None:
+        """Initialize the exception with a message."""
+        super().__init__(message)
+
+
+class UsageError(ConfigError):
+    """Raised when the USAGE is invalid."""
+
     def __init__(self, message: str = struct) -> None:
         """Initialize the exception with a message."""
         super().__init__(message)
 
 
+@dataclass
 class Config():
     nb_drones: int = -1
-    hubs: list[dict[str, tuple[int, int, str, str, int]]] = []
+    hubs: list[Hub] | None = None
     hub_names: list[str] = []
-    connections: list[tuple[str, str]] = []
+    connections: list[tuple[str, str, int]] = None
 
     colors = [
             "blue",

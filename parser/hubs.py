@@ -1,12 +1,22 @@
+from dataclasses import dataclass
 from .config import Config, ConfigError, StructError, hub
 from .utils import to_int, bold, comment, error, m_error, op_error
+
+@dataclass
+class Hub():
+    _name: str
+    _x: int
+    _y: int
+    _zone: str = ""
+    _color: str = ""
+    _max_drones: int = 0
 
 
 def to_name(info: str) -> str:
 
     if " " in info or "-" in info:
         raise ConfigError(
-            m_error('''Zone names can use any valid characters except:'''
+            m_error('''Hub names can use any valid characters except:'''
                     f'''\n  • {bold("dashes('-')")};'''
                     f'''\n  • {bold("spaces(' ')")}.'''
                     f'''\nInput: "{info}"'''))
@@ -21,7 +31,7 @@ def to_zone(info: str) -> str:
                     op_error('''String must be a zone type.'''
                              f'''\nInput: "{info}"\n''') +
                     comment(f'''Zone types available: '''
-                            f'''{(", ").join(Config.zones)}.'''))
+                            f'''\n{", ".join(Config.zones)}.'''))
 
     return info
 
@@ -33,51 +43,54 @@ def to_color(info: str) -> str:
             op_error('''String must be a color.'''
                      f'''\nInput: "{info}"\n''') +
             comment('''Colors available: ''') +
-            comment(f'''{(", ").join(Config.colors)}.'''))
+            comment(f'''\n{", ".join(Config.colors)}.'''))
 
     return info
 
 
-def to_hub(config: str) -> dict[str, tuple[int, int, str, str, int]]:
+OPTIONAL_PARSERS = {
+    "zone": to_zone,
+    "color": to_color,
+    "max_drones": lambda val: to_int(val, 1, True)
+}
 
-    new_hub: dict[str, tuple[int, int, str, str, int]] = {}
-    info = config.split("[")
 
-    if len(info) > 2 or (len(info) == 2 and info[1][-1] != "]"):
-        raise StructError(error(hub))
-
-    mandatory = info[0].split()
-    optional = (info[1][:-1].split() if len(info) == 2 else "")
-
-    if len(mandatory) != 3:
-        raise ConfigError(m_error("EXPECTED: 'NAME X Y'"))
-
-    zone = ""
-    color = ""
-    max_drones = 0
-
+def parse_optional_params(optional: list[str]) -> dict:
+    params = {}
     for item in optional:
-        items = item.split("=")
-        if len(items) == 2:
-            if items[0] == "zone" and not zone:
-                zone = to_zone(items[1])
-            elif items[0] == "color" and not color:
-                color = to_color(items[1])
-            elif items[0] == "max_drones" and not max_drones:
-                max_drones = to_int(items[1], 1, True)
-            else:
-                raise ConfigError(op_error("EXPECTED: '[criteria=CRITERIA]'"))
-        else:
-            raise ConfigError(
-                op_error("EXPECTED: "
-                         "'[zone=ZONE color=COLOR max_drones=MAX_DRONES]'"))
+        if "=" not in item:
+            raise ConfigError(op_error(hub))
 
-    new_hub[to_name(mandatory[0])] = (
-        to_int(mandatory[1], 0, False),
-        to_int(mandatory[2], 0, False),
-        zone,
-        color,
-        max_drones
+        key, value = item.split("=", 1)
+        if key not in OPTIONAL_PARSERS or key in params:
+            raise ConfigError(op_error(hub))
+
+        params[key] = OPTIONAL_PARSERS[key](value)
+    return params
+
+
+def to_hub(config: str) -> Hub:
+
+    if "[" in config:
+        if not config.endswith("]"):
+            raise StructError(error(hub))
+        mandatory_part, optional_part = config[:-1].split("[", 1)
+        optional = optional_part.split()
+    else:
+        mandatory_part = config
+        optional = []
+
+    mandatory = mandatory_part.split()
+    if len(mandatory) != 3:
+        raise ConfigError(m_error(hub))
+
+    opts = parse_optional_params(optional)
+
+    return Hub(
+        _name=to_name(mandatory[0]),
+        _x=to_int(mandatory[1], 0, False),
+        _y=to_int(mandatory[2], 0, False),
+        _zone=opts.get("zone", ""),
+        _color=opts.get("color", ""),
+        _max_drones=opts.get("max_drones", "")
         )
-
-    return new_hub

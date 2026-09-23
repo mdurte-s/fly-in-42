@@ -29,7 +29,7 @@ def to_int(info: str, criteria: int, positive: bool) -> int:
 
 
 def comment(msg: str) -> str:
-    return f"\033[3;38;5;178m\n# {msg}\033[0m"
+    return f"\033[3;38;5;178m# {msg}\033[0m"
 
 
 def error(msg: str) -> str:

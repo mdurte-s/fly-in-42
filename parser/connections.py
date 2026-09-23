@@ -1,13 +1,10 @@
 from .config import ConfigError, StructError, connection
 from .utils import to_int, comment, error, m_error
 
-# falta verificar
-# - e que o start e o goal tem connects;
 
 def hub_exists(name: str, hub_names: list[str]) -> bool:
-    if name in hub_names:
-        return True
-    return False
+    return name in hub_names
+
 
 def to_connection(config: str, hub_names: list[str]) -> tuple[str, str, int]:
 
@@ -24,8 +21,8 @@ def to_connection(config: str, hub_names: list[str]) -> tuple[str, str, int]:
     for c in con:
         if not hub_exists(c, hub_names):
             raise ConfigError(
-                m_error(f"'{c}' hub is not defined.\n") +
-                comment("Defined Hubs:") +
-                comment(f"{(", ").join(hub_names)}"))
+                m_error(f"'{c}' hub is not defined.") +
+                comment("\nDefined Hubs:") +
+                comment(f"\n{(", ").join(hub_names)}"))
 
     return (con[0], con[1], max_link)
