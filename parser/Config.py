@@ -28,14 +28,10 @@ class Config():
     def __init__(self,
                  nb_drones: int = -1,
                  hubs: list[Hub] = [],
-                 hub_names: list[str] = [],
-                 hub_coords: list[tuple[int, int]] = [],
                  connections: list[Connection] = []) -> None:
 
         self._nb_drones: int = nb_drones
         self._hubs: list[Hub] = hubs
-        self._hub_names: list[str] = hub_names
-        self._hub_coords: list[tuple[int, int]] = hub_coords
         self._connections: list[Connection] = connections
 
     def read_config(self, filename: str) -> list[tuple[str, str]]:
@@ -107,11 +103,12 @@ class Config():
             raise StructError(utils.error(Connection.connection))
 
         for c in con:
-            if c not in self._hub_names:
+            if c not in [hub._name for hub in self._hubs]:
                 raise ConfigError(
                     utils.m_error(f"'{c}' hub is not defined.") +
                     utils.comment("Defined Hubs:") +
-                    utils.comment(f"{', '.join(self._hub_names)}"))
+                    utils.comment(
+                        f"{', '.join([hub._name for hub in self._hubs])}"))
 
         return Connection(
             hub1=con[0],
