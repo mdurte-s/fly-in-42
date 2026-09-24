@@ -8,7 +8,7 @@ from . import utils
 @dataclass
 class Config():
 
-    colors = [
+    _colors = [
             "blue",
             "red",
             "green",
@@ -23,21 +23,23 @@ class Config():
             "pink"
             ]
 
-    zones = ["restricted", "priority"]
+    _zones = ["restricted", "priority"]
 
     def __init__(self,
                  nb_drones: int = -1,
                  hubs: list[Hub] = [],
                  hub_names: list[str] = [],
+                 hub_coords: list[tuple[int, int]] = [],
                  connections: list[Connection] = []) -> None:
 
         self._nb_drones: int = nb_drones
         self._hubs: list[Hub] = hubs
         self._hub_names: list[str] = hub_names
+        self._hub_coords: list[tuple[int, int]] = hub_coords
         self._connections: list[Connection] = connections
 
     def read_config(self, filename: str) -> list[tuple[str, str]]:
-        config: list[tuple[str, str]] = []
+        cfg: list[tuple[str, str]] = []
 
         try:
             with open(filename, "r") as file:
@@ -53,7 +55,7 @@ class Config():
                         raise StructError()
                     if not pairs[0] or not pairs[1]:
                         raise StructError()
-                    config.append((pairs[0], pairs[1]))
+                    cfg.append((pairs[0], pairs[1]))
 
         except FileNotFoundError:
             raise ConfigError(utils.error("File Not Found."))
@@ -64,24 +66,24 @@ class Config():
         except UnicodeDecodeError:
             raise ConfigError(utils.error("Not a readable text file."))
 
-        return config
+        return cfg
 
-    def to_hub(self, config: str) -> Hub:
+    def to_hub(self, cfg: str) -> Hub:
 
-        if "[" in config:
-            if not config.endswith("]"):
+        if "[" in cfg:
+            if not cfg.endswith("]"):
                 raise StructError(utils.error(Hub.hub))
-            mandatory_part, optional_part = config[:-1].split("[", 1)
+            mandatory_part, optional_part = cfg[:-1].split("[", 1)
             optional = optional_part.split()
         else:
-            mandatory_part = config
+            mandatory_part = cfg
             optional = []
 
         mandatory = mandatory_part.split()
         if len(mandatory) != 3:
             raise ConfigError(utils.m_error(Hub.hub))
 
-        opts = self.parse_optional_params(optional)
+        opts = self.optional_criteria(optional)
 
         return Hub(
             name=self.to_name(mandatory[0]),
@@ -92,9 +94,9 @@ class Config():
             max_drones=opts.get("max_drones", "")
             )
 
-    def to_connection(self, config: str) -> Connection:
+    def to_connection(self, cfg: str) -> Connection:
 
-        info = config.split()
+        info = cfg.split()
         if not info or len(info) > 2:
             raise StructError(utils.error(Connection.connection))
 
@@ -117,9 +119,9 @@ class Config():
             max_link_capacity=max_link
             )
 
-    def parse_optional_params(self, optional: list[str]) -> dict:
+    def optional_criteria(self, optional: list[str]) -> dict:
 
-        OPTIONAL_PARSERS = {
+        CRITERIA = {
                 "zone": self.to_zone,
                 "color": self.to_color,
                 "max_drones": lambda val: self.to_int(val, 1, True)
@@ -131,10 +133,10 @@ class Config():
                 raise ConfigError(utils.op_error(Hub.hub))
 
             key, value = item.split("=", 1)
-            if key not in OPTIONAL_PARSERS or key in params:
+            if key not in CRITERIA or key in params:
                 raise ConfigError(utils.op_error(Hub.hub))
 
-            params[key] = OPTIONAL_PARSERS[key](value)
+            params[key] = CRITERIA[key](value)
         return params
 
     def to_int(self, info: str, criteria: int, positive: bool) -> int:
@@ -179,23 +181,23 @@ class Config():
 
     def to_zone(self, info: str) -> str:
 
-        if info not in Config.zones:
+        if info not in self._zones:
 
             raise ConfigError(
                 utils.op_error('''String must be a zone type.'''
                                f'''\nInput: "{info}"\n''') +
                 utils.comment(f'''Zone types available: '''
-                              f'''\n{", ".join(self.zones)}.'''))
+                              f'''\n{", ".join(self._zones)}.'''))
 
         return info
 
     def to_color(self, info: str) -> str:
 
-        if info not in self.colors:
+        if info not in self._colors:
             raise ConfigError(
                 utils.op_error('''String must be a color.'''
                                f'''\nInput: "{info}"\n''') +
                 utils.comment('''Colors available: ''') +
-                utils.comment(f'''\n{", ".join(self.colors)}.'''))
+                utils.comment(f'''\n{", ".join(self._colors)}.'''))
 
         return info

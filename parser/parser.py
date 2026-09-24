@@ -17,6 +17,7 @@ def parser(filename: str) -> Config:
         elif (item[0] == "start_hub" and cfg._nb_drones >= 0 and
               not hub_started and not hub_ended):
             new_hub = cfg.to_hub(item[1].strip())
+            cfg._hub_coords.append((new_hub._x, new_hub._y))
             cfg._hub_names.append(new_hub._name)
             cfg._hubs.append(new_hub)
             hub_started = True
@@ -26,8 +27,13 @@ def parser(filename: str) -> Config:
             new_hub = cfg.to_hub(item[1].strip())
             if new_hub._name in cfg._hub_names:
                 raise ConfigError(
-                    utils.error(f"Hub named '{new_hub._name}' already exists.")
-                )
+                    utils.error(f"Hub named '{new_hub._name}' "
+                                "already exists."))
+            if (new_hub._x, new_hub._y) in cfg._hub_coords:
+                raise ConfigError(
+                    utils.error(f"Hub at ({new_hub._x}, {new_hub._y}) "
+                                "already exists."))
+            cfg._hub_coords.append((new_hub._x, new_hub._y))
             cfg._hub_names.append(new_hub._name)
             cfg._hubs.append(new_hub)
             hub_ended = (True if item[0] == "end_hub" else False)

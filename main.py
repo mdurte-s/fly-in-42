@@ -22,10 +22,10 @@ def main(args: list[str]) -> int:
 
     print(f"\nnb_drones = {cfg._nb_drones}\n")
     for i, item in enumerate(cfg._hubs):
-        print(f"hub[{i}]: {item}")
+        print(f"hub[{i}]: {item._name}")
     print()
     for i, item in enumerate(cfg._connections):
-        print(f"connection[{i}]: {item}")
+        print(f"connection[{i}]: {item._hub1}-{item._hub2}")
 
     return (0)
 
