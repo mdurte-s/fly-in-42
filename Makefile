@@ -1,3 +1,10 @@
+# Variables
+PYTHON = python3
+MAIN = main.py
+MAP = config.txt
+
+.PHONY: install run debug clean lint lint-strict
+
 # Rule to install dependencies
 install:
 	pip install flake8 mypy
@@ -5,11 +12,11 @@ install:
 
 # Rule to execute the main program
 run:
-	python3 a_maze_ing.py config.txt || true
+	$(PYTHON) $(MAIN) $(MAP) || true
 
 # Rule to run the program in debug mode using pdb
 debug:
-	python3 -m pdb a_maze_ing.py config.txt
+	$(PYTHON) -m pdb $(MAIN) $(MAP)
 
 # Rule to clean up cache and temporary files
 clean:
@@ -21,3 +28,8 @@ clean:
 lint:
 	flake8 .
 	mypy --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs .
+
+# Optional rule for extra verification
+lint-strict:
+	flake8 .
+	mypy --strict .
