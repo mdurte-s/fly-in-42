@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from .ConfigError import ConfigError, StructError
-from .Hub import Hub
-from .Connection import Connection
-from . import utils
+from ..models import Hub, Connection
+from ..utils import utils
+from .config_error import ConfigError, StructError
 
 
 @dataclass
@@ -23,16 +22,12 @@ class Config():
             "pink"
             ]
 
-    _zones = ["restricted", "priority"]
+    _zones = ["normal", "restricted", "priority", "blocked"]
 
-    def __init__(self,
-                 nb_drones: int = -1,
-                 hubs: list[Hub] = [],
-                 connections: list[Connection] = []) -> None:
-
-        self._nb_drones: int = nb_drones
-        self._hubs: list[Hub] = hubs
-        self._connections: list[Connection] = connections
+    def __init__(self) -> None:
+        self._nb_drones: int = -1
+        self._hubs: list[Hub] = []
+        self._connections: list[Connection] = []
 
     def read_config(self, filename: str) -> list[tuple[str, str]]:
         cfg: list[tuple[str, str]] = []
@@ -68,7 +63,7 @@ class Config():
 
         if "[" in cfg:
             if not cfg.endswith("]"):
-                raise StructError(utils.error(Hub.hub))
+                raise StructError(utils.error(Hub.EXPECTED_FORMAT))
             mandatory_part, optional_part = cfg[:-1].split("[", 1)
             optional = optional_part.split()
         else:
@@ -77,9 +72,9 @@ class Config():
 
         mandatory = mandatory_part.split()
         if len(mandatory) != 3:
-            raise ConfigError(utils.m_error(Hub.hub))
+            raise ConfigError(utils.m_error(Hub.EXPECTED_FORMAT))
 
-        opts = self.optional_criteria(optional)
+        opts = self.hub_optional_criteria(optional)
 
         return Hub(
             name=self.to_name(mandatory[0]),
@@ -92,17 +87,25 @@ class Config():
 
     def to_connection(self, cfg: str) -> Connection:
 
-        info = cfg.split()
-        if not info or len(info) > 2:
-            raise StructError(utils.error(Connection.connection))
+        if "[" in cfg:
+            if not cfg.endswith("]"):
+                raise StructError(utils.error(Connection.EXPECTED_FORMAT))
+            mandatory_part, optional_part = cfg[:-1].split("[", 1)
+            optional = optional_part.split()
+        else:
+            mandatory_part = cfg
+            optional = []
 
-        max_link = (self.to_int(info[1], 1, True) if len(info) == 2 else -1)
+        mandatory = mandatory_part.strip().split("-")
+        if len(mandatory) != 2:
+            raise ConfigError(utils.m_error(Hub.hub))
+        elif mandatory[0] == mandatory[1]:
+            raise ConfigError(
+                utils.m_error("Connections must be between 2 different hubs"))
 
-        con = info[0].split("-")
-        if len(con) != 2:
-            raise StructError(utils.error(Connection.connection))
+        opts = self.con_optional_criteria(optional)
 
-        for c in con:
+        for c in mandatory:
             if c not in [hub._name for hub in self._hubs]:
                 raise ConfigError(
                     utils.m_error(f"'{c}' hub is not defined.") +
@@ -111,12 +114,12 @@ class Config():
                         f"{', '.join([hub._name for hub in self._hubs])}"))
 
         return Connection(
-            hub1=con[0],
-            hub2=con[1],
-            max_link_capacity=max_link
+            hub1=next((h for h in self._hubs if h._name == mandatory[0])),
+            hub2=next((h for h in self._hubs if h._name == mandatory[1])),
+            max_link_capacity=opts.get("max_link_capacity", "")
             )
 
-    def optional_criteria(self, optional: list[str]) -> dict:
+    def _hub_optional_criteria(self, optional: list[str]) -> dict:
 
         CRITERIA = {
                 "zone": self.to_zone,
@@ -127,11 +130,29 @@ class Config():
         params = {}
         for item in optional:
             if "=" not in item:
-                raise ConfigError(utils.op_error(Hub.hub))
+                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT))
 
             key, value = item.split("=", 1)
             if key not in CRITERIA or key in params:
-                raise ConfigError(utils.op_error(Hub.hub))
+                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT))
+
+            params[key] = CRITERIA[key](value)
+        return params
+
+    def _con_optional_criteria(self, optional: list[str]) -> dict:
+
+        CRITERIA = {
+                "max_link_capacity": lambda val: self.to_int(val, 1, True)
+            }
+
+        params = {}
+        for item in optional:
+            if "=" not in item:
+                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT))
+
+            key, value = item.split("=", 1)
+            if key not in CRITERIA or key in params:
+                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT))
 
             params[key] = CRITERIA[key](value)
         return params
@@ -164,7 +185,7 @@ class Config():
                     utils.m_error("Value must be an integer."
                                   f'''\nInput: "{info}"'''))
 
-    def to_name(self, info: str) -> str:
+    def _to_name(self, info: str) -> str:
 
         if " " in info or "-" in info:
 
@@ -176,7 +197,7 @@ class Config():
 
         return info
 
-    def to_zone(self, info: str) -> str:
+    def _to_zone(self, info: str) -> str:
 
         if info not in self._zones:
 
@@ -188,7 +209,7 @@ class Config():
 
         return info
 
-    def to_color(self, info: str) -> str:
+    def _to_color(self, info: str) -> str:
 
         if info not in self._colors:
             raise ConfigError(

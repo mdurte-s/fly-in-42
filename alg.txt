@@ -1,0 +1,30 @@
+Fase A: Decomposição em Redes de Fluxo (Min-Cost Max-Flow ou Ford-Fulkerson)
+
+Para minimizar o número total de turnos, precisas de encontrar múltiplos
+caminhos disjuntos ou parcialmente disjuntos com base na capacidade dos nós
+e links.
+
+    - Algoritmo de Edmonds-Karp / Dinic (Adaptado) ou Sucinta Decomposição em Fluxos:
+    É ideal para encontrar o conjunto de caminhos disjuntos em termos de capacidade
+    de rota/arestas (max_link_capacity).   
+
+    - A (A-Star) / Dijkstra com Pesos no Grafo Residual:
+    Permite encontrar caminhos alternativos mais curtos considerando os custos d
+    passagem (como zonas restricted com custo 2 ou zonas priority).   
+
+
+Fase B: Agendamento no Espaço-Tempo (Time-Expanded Graph ou CBS / Reservation Table)
+Depois de teres os caminhos, os drones não podem simplesmente avançar todos ao mesmo
+tempo sem colidir.   
+
+    - Time-Expanded Graph (Grafo Expandido no Tempo):
+    Trata-se de duplicar o grafo para cada turno t.
+    Um nó deixa de ser apenas (U) e passa a ser (U,t).
+    Mover para um nó normal adiciona 1 ao tempo (t+1).
+    Mover para um nó restricted adiciona 2 ao tempo (t+2).   
+    Ficar parado no mesmo nó é uma transição de (U,t) para (U,t+1).
+
+    - Tabela de Reservas (Conflict-Based Search / Space-Time Reservation):
+    Manténs um registo do número de drones numa dada zona ou ligação em cada instante t.
+    Ao agendar o percurso de cada drone, verificas se a ocupação em (Zona,t) não excede
+    o max_drones e se a ligação em (A→B,t) não excede o max_link_capacity.

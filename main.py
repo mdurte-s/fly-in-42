@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 
 from sys import argv
-from parser import parser, Config, ConfigError, UsageError
+from flyin import (
+    MapParser,
+    Config,
+    ConfigError,
+    UsageError,
+    Simulation
+    )
 
 
 def main(args: list[str]) -> int:
@@ -9,7 +15,7 @@ def main(args: list[str]) -> int:
     try:
         if len(args) != 2:
             raise UsageError()
-        cfg: Config = parser(args[1])
+        cfg: Config = MapParser(args[1]).parser
 
     except ConfigError as e:
         print("\033[1;31mFAILURE!"
@@ -20,13 +26,12 @@ def main(args: list[str]) -> int:
     print("\033[1;38;5;213mSUCCESS!"
           "\nYOU MAKE THE CAT VERY HAPPY 😻\033[0m")
 
-    print(f"\nnb_drones = {cfg._nb_drones}\n")
-    for i, item in enumerate(cfg._hubs):
-        print(f"hub[{i}]: {item._name}")
-    print()
-    for i, item in enumerate(cfg._connections):
-        print(f"connection[{i}]: {item._hub1}-{item._hub2}")
-
+    fly = Simulation(cfg=cfg)
+    fly.solver()
+    path = fly._path
+    print("path: ", end="")
+    for hub in path:
+        print(f"{hub._name} ", end="")
     return (0)
 
 
