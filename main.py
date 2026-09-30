@@ -15,7 +15,7 @@ def main(args: list[str]) -> int:
     try:
         if len(args) != 2:
             raise UsageError()
-        cfg: Config = MapParser(args[1]).parser
+        cfg: Config = MapParser(args[1]).parser()
 
     except ConfigError as e:
         print("\033[1;31mFAILURE!"
@@ -26,12 +26,12 @@ def main(args: list[str]) -> int:
     print("\033[1;38;5;213mSUCCESS!"
           "\nYOU MAKE THE CAT VERY HAPPY 😻\033[0m")
 
-    fly = Simulation(cfg=cfg)
-    fly.solver()
-    path = fly._path
-    print("path: ", end="")
-    for hub in path:
-        print(f"{hub._name} ", end="")
+    # fly = Simulation(cfg=cfg)
+    # fly.solver()
+    # path = fly._path
+    # print("path: ", end="")
+    # for hub in path:
+    #     print(f"{hub._name} ", end="")
     return (0)
 
 

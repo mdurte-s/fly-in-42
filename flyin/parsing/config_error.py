@@ -1,17 +1,17 @@
 from typing import Optional
-from ..utils import comment
+from ..utils import comment, bold
 
 
 class ConfigError(Exception):
     """Raised when the configuration file is invalid."""
 
     def __init__(self,
-                 message: str = "[Configuration Error]",
+                 message: str = "Configuration Error",
                  line: Optional[int] = None
                  ) -> None:
         """Initialize the exception with a message."""
         if line:
-            full_message = f"[Line {line}] {message}"
+            full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
             full_message = message
         super().__init__(full_message)
@@ -41,7 +41,7 @@ class StructError(ConfigError):
                  ) -> None:
         """Initialize the exception with a message."""
         if line:
-            full_message = f"[Line {line}] {message}"
+            full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
             full_message = message
         super().__init__(full_message)

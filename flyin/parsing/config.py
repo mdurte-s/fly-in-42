@@ -28,25 +28,26 @@ class Config():
         self._nb_drones: int = -1
         self._hubs: list[Hub] = []
         self._connections: list[Connection] = []
+        self._current_line: int = 0
 
-    def read_config(self, filename: str) -> list[tuple[str, str]]:
-        cfg: list[tuple[str, str]] = []
+    def read_config(self, filename: str) -> list[tuple[int, str, str]]:
+        cfg: list[tuple[int, str, str]] = []
 
         try:
             with open(filename, "r") as file:
-                for raw_line in file:
+                for i, raw_line in enumerate(file, start=1):
                     line = raw_line.strip()
 
                     if not line or line.startswith("#"):
                         continue
                     if ":" not in line:
-                        raise StructError()
+                        raise StructError(line=i)
                     pairs = line.split(":")
                     if len(pairs) != 2:
-                        raise StructError()
+                        raise StructError(line=i)
                     if not pairs[0] or not pairs[1]:
-                        raise StructError()
-                    cfg.append((pairs[0], pairs[1]))
+                        raise StructError(line=i)
+                    cfg.append((i, pairs[0], pairs[1]))
 
         except FileNotFoundError:
             raise ConfigError(utils.error("File Not Found."))
@@ -63,7 +64,8 @@ class Config():
 
         if "[" in cfg:
             if not cfg.endswith("]"):
-                raise StructError(utils.error(Hub.EXPECTED_FORMAT))
+                raise StructError(utils.error(Hub.EXPECTED_FORMAT),
+                                  line=self._current_line)
             mandatory_part, optional_part = cfg[:-1].split("[", 1)
             optional = optional_part.split()
         else:
@@ -72,12 +74,13 @@ class Config():
 
         mandatory = mandatory_part.split()
         if len(mandatory) != 3:
-            raise ConfigError(utils.m_error(Hub.EXPECTED_FORMAT))
+            raise ConfigError(utils.error(Hub.EXPECTED_FORMAT),
+                              line=self._current_line)
 
-        opts = self.hub_optional_criteria(optional)
+        opts = self._hub_optional_criteria(optional)
 
         return Hub(
-            name=self.to_name(mandatory[0]),
+            name=self._to_name(mandatory[0]),
             x=self.to_int(mandatory[1], 0, False),
             y=self.to_int(mandatory[2], 0, False),
             zone=opts.get("zone", ""),
@@ -89,7 +92,8 @@ class Config():
 
         if "[" in cfg:
             if not cfg.endswith("]"):
-                raise StructError(utils.error(Connection.EXPECTED_FORMAT))
+                raise StructError(utils.error(Connection.EXPECTED_FORMAT),
+                                  line=self._current_line)
             mandatory_part, optional_part = cfg[:-1].split("[", 1)
             optional = optional_part.split()
         else:
@@ -98,12 +102,14 @@ class Config():
 
         mandatory = mandatory_part.strip().split("-")
         if len(mandatory) != 2:
-            raise ConfigError(utils.m_error(Hub.hub))
+            raise ConfigError(utils.m_error(Hub.EXPECTED_FORMAT),
+                              line=self._current_line)
         elif mandatory[0] == mandatory[1]:
             raise ConfigError(
-                utils.m_error("Connections must be between 2 different hubs"))
+                utils.m_error("Connections must be between 2 different hubs"),
+                line=self._current_line)
 
-        opts = self.con_optional_criteria(optional)
+        opts = self._con_optional_criteria(optional)
 
         for c in mandatory:
             if c not in [hub._name for hub in self._hubs]:
@@ -111,7 +117,8 @@ class Config():
                     utils.m_error(f"'{c}' hub is not defined.") +
                     utils.comment("Defined Hubs:") +
                     utils.comment(
-                        f"{', '.join([hub._name for hub in self._hubs])}"))
+                        f"{', '.join([hub._name for hub in self._hubs])}"),
+                    line=self._current_line)
 
         return Connection(
             hub1=next((h for h in self._hubs if h._name == mandatory[0])),
@@ -122,19 +129,21 @@ class Config():
     def _hub_optional_criteria(self, optional: list[str]) -> dict:
 
         CRITERIA = {
-                "zone": self.to_zone,
-                "color": self.to_color,
+                "zone": self._to_zone,
+                "color": self._to_color,
                 "max_drones": lambda val: self.to_int(val, 1, True)
             }
 
         params = {}
         for item in optional:
             if "=" not in item:
-                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT))
+                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT),
+                                  line=self._current_line)
 
             key, value = item.split("=", 1)
             if key not in CRITERIA or key in params:
-                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT))
+                raise ConfigError(utils.op_error(Hub.EXPECTED_FORMAT),
+                                  line=self._current_line)
 
             params[key] = CRITERIA[key](value)
         return params
@@ -148,11 +157,13 @@ class Config():
         params = {}
         for item in optional:
             if "=" not in item:
-                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT))
+                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT),
+                                  line=self._current_line)
 
             key, value = item.split("=", 1)
             if key not in CRITERIA or key in params:
-                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT))
+                raise ConfigError(utils.op_error(Connection.EXPECTED_FORMAT),
+                                  line=self._current_line)
 
             params[key] = CRITERIA[key](value)
         return params
@@ -170,20 +181,24 @@ class Config():
             if criteria and positive:
                 raise ConfigError(
                     utils.op_error("Value must be a postive integer above zero"
-                                   f'''\nInput: "{info}"'''))
+                                   f'''\nInput: "{info}"'''),
+                    line=self._current_line)
             elif criteria and not positive:
                 raise ConfigError(
                     utils.op_error("Value must be an integer."
-                                   f'''\nInput: "{info}"'''))
+                                   f'''\nInput: "{info}"'''),
+                    line=self._current_line)
 
             elif not criteria and positive:
                 raise ConfigError(
                     utils.m_error("Value must be a postive integer above zero."
-                                  f'''\nInput: "{info}"'''))
+                                  f'''\nInput: "{info}"'''),
+                    line=self._current_line)
             else:
                 raise ConfigError(
                     utils.m_error("Value must be an integer."
-                                  f'''\nInput: "{info}"'''))
+                                  f'''\nInput: "{info}"'''),
+                    line=self._current_line)
 
     def _to_name(self, info: str) -> str:
 
@@ -193,7 +208,8 @@ class Config():
                 utils.m_error("Hub names can use any valid characters except:"
                               f'''\n  • {utils.bold("dashes('-')")};'''
                               f'''\n  • {utils.bold("spaces(' ')")}.'''
-                              f"\nInput: '{info}'"))
+                              f"\nInput: '{info}'"),
+                line=self._current_line)
 
         return info
 
@@ -205,7 +221,8 @@ class Config():
                 utils.op_error('''String must be a zone type.'''
                                f'''\nInput: "{info}"\n''') +
                 utils.comment(f'''Zone types available: '''
-                              f'''\n{", ".join(self._zones)}.'''))
+                              f'''\n{", ".join(self._zones)}.'''),
+                line=self._current_line)
 
         return info
 
@@ -216,6 +233,7 @@ class Config():
                 utils.op_error('''String must be a color.'''
                                f'''\nInput: "{info}"\n''') +
                 utils.comment('''Colors available: ''') +
-                utils.comment(f'''\n{", ".join(self._colors)}.'''))
+                utils.comment(f'''\n{", ".join(self._colors)}.'''),
+                line=self._current_line)
 
         return info
