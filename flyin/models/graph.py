@@ -11,16 +11,13 @@ class Graph():
         self._start_hub: Optional[Hub] = None
         self._end_hub: Optional[Hub] = None
 
-    def add_hub(self,
-                hub: Hub,
-                is_start: bool = False,
-                is_end: bool = False
-                ) -> None:
+    def add_hub(
+            self, hub: Hub, is_start: bool = False,
+            is_end: bool = False
+            ) -> None:
         self._hubs[hub.name] = hub
-        if is_start:
-            self._start_hub = hub
-        if is_end:
-            self._end_hub = hub
+        self._start_hub = hub if is_start else False
+        self._end_hub = hub if is_end else False
 
     def add_connection(self, connection: Connection) -> None:
         self._connections.append(connection)

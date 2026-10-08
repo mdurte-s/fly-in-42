@@ -24,4 +24,4 @@ class Drone():
 
     @property
     def is_active(self) -> bool:
-        return not self._has_reached_goal
+        return not self._arrived

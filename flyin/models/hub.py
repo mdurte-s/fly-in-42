@@ -9,14 +9,10 @@ class Hub():
         "Expected: 'hub: "
         "NAME X Y [zone=ZONE color=COLOR max_drones=MAX_DRONES]'")
 
-    def __init__(self,
-                 name: str,
-                 x: int,
-                 y: int,
-                 zone: str = "normal",
-                 color: str = "",
-                 max_drones: int = 1,
-                 ) -> None:
+    def __init__(
+            self, name: str, x: int, y: int, zone: str = "normal",
+            color: str = "", max_drones: int = 1
+            ) -> None:
 
         self._name: str = name
         self._x: int = x

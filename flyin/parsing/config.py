@@ -7,21 +7,6 @@ from .config_error import ConfigError, StructError
 @dataclass
 class Config():
 
-    _colors = [
-            "blue",
-            "red",
-            "green",
-            "purple",
-            "yellow",
-            "orange",
-            "cyan",
-            "magenta",
-            "gold",
-            "brown",
-            "lime",
-            "pink"
-            ]
-
     _zones = ["normal", "restricted", "priority", "blocked"]
 
     def __init__(self) -> None:
@@ -85,7 +70,7 @@ class Config():
             y=self.to_int(mandatory[2], 0, False),
             zone=opts.get("zone", ""),
             color=opts.get("color", ""),
-            max_drones=opts.get("max_drones", "")
+            max_drones=opts.get("max_drones", 1)
             )
 
     def to_connection(self, cfg: str) -> Connection:
@@ -112,17 +97,17 @@ class Config():
         opts = self._con_optional_criteria(optional)
 
         for c in mandatory:
-            if c not in [hub._name for hub in self._hubs]:
+            if c not in [hub.name for hub in self._hubs]:
                 raise ConfigError(
                     utils.m_error(f"'{c}' hub is not defined.") +
                     utils.comment("Defined Hubs:") +
                     utils.comment(
-                        f"{', '.join([hub._name for hub in self._hubs])}"),
+                        f"{', '.join([hub.name for hub in self._hubs])}"),
                     line=self._current_line)
 
         return Connection(
-            hub1=next((h for h in self._hubs if h._name == mandatory[0])),
-            hub2=next((h for h in self._hubs if h._name == mandatory[1])),
+            hub1=next((h for h in self._hubs if h.name == mandatory[0])),
+            hub2=next((h for h in self._hubs if h.name == mandatory[1])),
             max_link_capacity=opts.get("max_link_capacity", "")
             )
 
@@ -228,12 +213,11 @@ class Config():
 
     def _to_color(self, info: str) -> str:
 
-        if info not in self._colors:
+        if " " in info or "-" in info:
             raise ConfigError(
-                utils.op_error('''String must be a color.'''
-                               f'''\nInput: "{info}"\n''') +
-                utils.comment('''Colors available: ''') +
-                utils.comment(f'''\n{", ".join(self._colors)}.'''),
-                line=self._current_line)
-
+                utils.op_error("Color must be a single-word string without "
+                               "spaces or dashes."
+                               f'\nInput: "{info}"'),
+                line=self._current_line
+            )
         return info

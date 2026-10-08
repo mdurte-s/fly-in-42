@@ -3,13 +3,14 @@ from ..utils import comment, bold
 
 
 class ConfigError(Exception):
-    """Raised when the configuration file is invalid."""
+    """ Raised when the configuration file is invalid. """
 
-    def __init__(self,
-                 message: str = "Configuration Error",
-                 line: Optional[int] = None
-                 ) -> None:
-        """Initialize the exception with a message."""
+    def __init__(
+            self, message: str = "Configuration Error",
+            line: Optional[int] = None
+            ) -> None:
+        """ Initialize the exception with a message. """
+
         if line:
             full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
@@ -18,7 +19,7 @@ class ConfigError(Exception):
 
 
 class StructError(ConfigError):
-    """Raised when the STRUCTURE of the configuration file is invalid."""
+    """ Raised when the STRUCTURE of the configuration file is invalid. """
 
     EXPECTED_FORMAT = (
         f"{comment('Configuration file expected structure:')}\n"
@@ -35,11 +36,11 @@ class StructError(ConfigError):
         f"{comment('[max_link_capacity=MAX_LINK_CAPACITY]')}"
         )
 
-    def __init__(self,
-                 message: str = EXPECTED_FORMAT,
-                 line: Optional[int] = None
-                 ) -> None:
-        """Initialize the exception with a message."""
+    def __init__(
+            self, message: str = EXPECTED_FORMAT, line: Optional[int] = None
+            ) -> None:
+        """ Initialize the exception with a message. """
+
         if line:
             full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
@@ -48,12 +49,13 @@ class StructError(ConfigError):
 
 
 class UsageError(ConfigError):
-    """Raised when the USAGE is invalid."""
+    """ Raised when the USAGE is invalid. """
 
     EXPECTED_FORMAT = comment("Usage: ./main.py <path/config-file.txt>")
 
     def __init__(self,
                  message: str = EXPECTED_FORMAT,
                  ) -> None:
-        """Initialize the exception with a message."""
+        """ Initialize the exception with a message. """
+
         super().__init__(message)

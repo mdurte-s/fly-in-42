@@ -6,12 +6,11 @@ from .config_error import ConfigError, StructError
 
 class MapParser():
 
-    def __init__(self,
-                 filepath: str
-                 ) -> None:
+    def __init__(self, filepath: str) -> None:
         self._filepath: str = filepath
+        self._cfg: Config = self._parser()
 
-    def parser(self) -> Config:
+    def _parser(self) -> Config:
 
         cfg = Config()
         config: list[tuple[int, str, str]] = cfg.read_config(self._filepath)
@@ -32,15 +31,15 @@ class MapParser():
             elif ((key == "hub" or key == "end_hub")
                     and hub_started and not hub_ended):
                 new_hub: Hub = cfg.to_hub(val.strip())
-                if new_hub._name in [hub._name for hub in cfg._hubs]:
+                if new_hub.name in [hub.name for hub in cfg._hubs]:
                     raise ConfigError(
-                        utils.error(f"Hub named '{new_hub._name}' "
+                        utils.error(f"Hub named '{new_hub.name}' "
                                     "already exists."),
                         line=line)
-                if ((new_hub._x, new_hub._y) in [(hub._x, hub._y)
-                                                 for hub in cfg._hubs]):
+                if (new_hub.coordinates in [hub.coordinates
+                                            for hub in cfg._hubs]):
                     raise ConfigError(
-                        utils.error(f"Hub at ({new_hub._x}, {new_hub._y}) "
+                        utils.error(f"Hub at {new_hub.coordinates} "
                                     "already exists."),
                         line=line)
                 cfg._hubs.append(new_hub)
@@ -48,13 +47,13 @@ class MapParser():
 
             elif key == "connection" and hub_ended:
                 new_connection: Connection = cfg.to_connection(val.strip())
-                new = {new_connection._hub1._name, new_connection._hub2._name}
-                if new in [{c._hub1._name, c._hub2._name}
+                new = {new_connection.hub1.name, new_connection.hub2.name}
+                if new in [{c.hub1.name, c.hub2.name}
                            for c in cfg._connections]:
                     raise ConfigError(
                         utils.m_error(
-                            f"Connection '{new_connection._hub1._name}"
-                            f"-{new_connection._hub2._name}' "
+                            f"Connection '{new_connection.hub1.name}"
+                            f"-{new_connection.hub2.name}' "
                             "already exists."),
                         line=line)
                 cfg._connections.append(new_connection)
@@ -63,3 +62,7 @@ class MapParser():
                 raise StructError(line=line)
 
         return (cfg)
+
+    @property
+    def cfg(self) -> Config:
+        return self._cfg

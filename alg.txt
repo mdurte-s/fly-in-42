@@ -28,3 +28,46 @@ tempo sem colidir.
     Manténs um registo do número de drones numa dada zona ou ligação em cada instante t.
     Ao agendar o percurso de cada drone, verificas se a ocupação em (Zona,t) não excede
     o max_drones e se a ligação em (A→B,t) não excede o max_link_capacity.
+
+# 1. Obter a tag da versão mais recente e descarregar o pacote de macOS amd64
+LATEST_TAG=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+VERSION=${LATEST_TAG#v}
+
+curl -fL "https://github.com/coder/code-server/releases/download/${LATEST_TAG}/code-server-${VERSION}-macos-amd64.tar.gz" | tar -xz -C ~/.local/lib
+
+# 2. Criar o atalho do comando
+ln -sf ~/.local/lib/code-server-${VERSION}-macos-amd64/bin/code-server ~/.local/bin/code-server
+
+# 3. Adicionar a pasta ao Zsh e recarregar
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+_colors = [
+            "blue",
+            "red",
+            "green",
+            "purple",
+            "yellow",
+            "orange",
+            "cyan",
+            "magenta",
+            "gold",
+            "brown",
+            "lime",
+            "pink"
+            ]
+
+# Mapeamento interno de cores ANSI para o terminal
+COLOR_MAP = {
+    "red": "\033[31m",
+    "green": "\033[32m",
+    "yellow": "\033[33m",
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "cyan": "\033[36m",
+    "gray": "\033[90m",
+}
+DEFAULT_COLOR = "\033[37m"  # Branco/Default se a cor não for reconhecida
+
+def get_ansi_color(color_name: str) -> str:
+    return COLOR_MAP.get(color_name.lower(), DEFAULT_COLOR)

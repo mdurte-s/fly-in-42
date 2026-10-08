@@ -1,14 +1,11 @@
-from .models import Connection, Drone, Hub
 from .parsing import Config, ConfigError, UsageError, MapParser
-from .simulation import Simulation
+from .simulation import SimulationEngine, SimulationError
 
 __all__ = [
-    "Connection",
-    "Drone",
-    "Hub",
     "Config",
     "ConfigError",
     "UsageError",
     "MapParser",
-    "Simulation"
+    "SimulationEngine",
+    "SimulationError"
 ]

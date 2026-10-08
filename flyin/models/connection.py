@@ -7,12 +7,12 @@ class Connection():
 
     EXPECTED_FORMAT = (
         "Expected: 'connection: "
-        "NAME-NAME [max_link_capacity=MAX_LINK_CAPACITY]'")
+        "NAME-NAME [max_link_capacity=MAX_LINK_CAPACITY]'"
+        )
 
-    def __init__(self,
-                 hub1: Hub,
-                 hub2: Hub,
-                 max_link_capacity: int = 1) -> None:
+    def __init__(
+            self, hub1: Hub, hub2: Hub, max_link_capacity: int = 1
+            ) -> None:
 
         self._hub1: Hub = hub1
         self._hub2: Hub = hub2
