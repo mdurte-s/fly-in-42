@@ -1,7 +1,7 @@
 from ..models import Hub, Drone
 from ..parsing import Config
 from .pathfinding import PathFinder
-from .simulation_error import SimulationError, PathFindingError
+from .simulation_error import PathFindingError
 
 
 class SimulationEngine:
@@ -22,18 +22,18 @@ class SimulationEngine:
     def run(self) -> None:
         """ Run the simulation until all drones reach the destination. """
         p_finder: PathFinder = PathFinder(self._hubs, self._cfg._connections)
-        path: list[list[Hub]] = p_finder.find_paths(
+        paths: list[list[Hub]] = p_finder.find_paths(
             self._start_hub.name, self._end_hub.name, 5
             )
-
-        if not path[0]:
+        if not paths[0]:
             raise PathFindingError("No valid path found")
 
-        self._simulate_movement(path[0])
+        self._simulate(paths)
 
-    def _simulate_movement(self, path: list[Hub]) -> None:
-        """Manages the movement of drones along the path shift by shift."""
+    def _simulate(self, paths: list[list[Hub]]) -> None:
+        """ Manages the movement of drones along multiple paths. """
         # Mapeia cada hub para o seu próximo hub no caminho
+        path = paths[0]
         next_hub_map: dict[str, Hub] = {
             path[i].name: path[i + 1] for i in range(len(path) - 1)
         }

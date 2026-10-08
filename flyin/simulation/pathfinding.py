@@ -42,6 +42,7 @@ class PathFinder:
             paths.append(path)
             for hub in path[1:-1]:
                 penalties[hub.name] += 5.0
+
         return paths
 
     def dijkstra(
