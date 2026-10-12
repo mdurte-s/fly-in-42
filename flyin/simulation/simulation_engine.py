@@ -1,5 +1,9 @@
-from ..models import Hub, Drone
+import time
+import pygame
+from sys import exit
+from ..models import Hub, Drone, Graph
 from ..parsing import Config
+from ..display import SimulationGUI
 from .pathfinding import PathFinder
 from .simulation_error import PathFindingError
 
@@ -8,9 +12,10 @@ class SimulationEngine:
     """ Simulation engine responsible for forwarding the drones shift
     by shift. """
 
-    def __init__(self, cfg: Config) -> None:
+    def __init__(self, cfg: Config, enable_gui: bool = True) -> None:
         self._cfg: Config = cfg
-        self._hubs: list[Hub] = cfg._hubs
+        self._hubs: list[Hub] = cfg.hubs
+        self._connections: list[Hub] = cfg.connections
         self._start_hub: Hub = self._hubs[0]
         self._end_hub: Hub = self._hubs[-1]
         self._drones: list[Drone] = [
@@ -19,9 +24,16 @@ class SimulationEngine:
         ]
         self._nb_turns: int = 0
 
+        self._graph: Graph = Graph.from_config(cfg)
+        self._enable_gui: bool = enable_gui
+        self._display: SimulationGUI | None = None
+
+        if self._enable_gui:
+            self._display = SimulationGUI(self._graph)
+
     def run(self) -> None:
         """ Run the simulation until all drones reach the destination. """
-        p_finder: PathFinder = PathFinder(self._hubs, self._cfg._connections)
+        p_finder: PathFinder = PathFinder(self._hubs, self._connections)
         paths: list[list[Hub]] = p_finder.find_paths(
             self._start_hub.name, self._end_hub.name, 5
             )
@@ -31,27 +43,29 @@ class SimulationEngine:
         self._simulate(paths)
 
     def _simulate(self, paths: list[list[Hub]]) -> None:
-        """ Manages the movement of drones along multiple paths. """
-        # Mapeia cada hub para o seu próximo hub no caminho
+        """ Manages the movement of drones along multiple paths.
+        (we wish) """
         path = paths[0]
         next_hub_map: dict[str, Hub] = {
             path[i].name: path[i + 1] for i in range(len(path) - 1)
         }
-
-        # Controlo de ocupação atual dos hubs
         hub_occupancy: dict[str, int] = {h.name: 0 for h in self._hubs}
         for drone in self._drones:
             if drone.current_hub.name != self._start_hub.name:
                 hub_occupancy[drone.current_hub.name] += 1
 
         active_drones = list(self._drones)
+        clock = pygame.time.Clock()
+
+        if self._display:
+            self._display.update_simulation_state(self._nb_turns, self._drones)
+            self._display.render_frame()
+            time.sleep(0.5)
 
         while active_drones:
             turn_movements: list[str] = []
             moved_in_this_turn: set = set()
 
-            # Processar drones que já se moveram para que libertem espaço nos
-            # hubs
             for drone in active_drones:
                 current_name = drone.current_hub.name
 
@@ -59,8 +73,7 @@ class SimulationEngine:
                     target_hub = next_hub_map[current_name]
                     target_name = target_hub.name
 
-                    # Verificar capacidade do hub de destino (start e end_hub
-                    # têm capacidade ilimitada)
+                    # check hub cap
                     is_end = (target_name == self._end_hub.name)
                     has_capacity = (
                         is_end or
@@ -68,13 +81,10 @@ class SimulationEngine:
                     )
 
                     if has_capacity and drone.name not in moved_in_this_turn:
-                        # Libertar capacidade do hub atual
-                        # (exceto no start_hub)
                         if current_name != self._start_hub.name:
                             hub_occupancy[current_name] -= 1
 
-                        # Mover o drone
-                        drone._current_hub = target_hub
+                        drone._current_hub = target_hub  # move th drone
                         if not is_end:
                             hub_occupancy[target_name] += 1
                         else:
@@ -83,12 +93,33 @@ class SimulationEngine:
                         moved_in_this_turn.add(drone.name)
                         turn_movements.append(f"{drone.name}-{target_name}")
 
-            # Remover drones entregues no objetivo
             active_drones = [d for d in active_drones if not d._arrived]
 
             if turn_movements:
                 self._nb_turns += 1
                 print(" ".join(turn_movements))
+
+                if self._display:
+                    self._display.update_simulation_state(
+                        self._nb_turns, self._drones
+                        )
+                    running = self._display.render_frame()
+                    if not running:
+                        break
+                    time.sleep(0.5)
             else:
-                # Evitar loop infinito em caso de bloqueio total
                 break
+
+        if self._display:
+            self._display.update_simulation_state(self._nb_turns, self._drones)
+
+            print("\nSimulation complete. Close the GUI window to exit.")
+            clock = pygame.time.Clock()
+
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        exit(0)
+
+                clock.tick(10)

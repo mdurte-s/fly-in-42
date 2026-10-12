@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flyin"
+version = "0.1.0"
+description = "42 school graphics project - Flyin - using Pygame"
+# readme = "README.md"
+requires-python = ">=3.10, <3.15" 
+authors = [
+    { name = "mdurte-s", email = "mdurte-s@student.42.pt" }
+]
+dependencies = [
+    "pygame-ce>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "black",
+    "mypy",
+]
+
+# Allows running your game directly via CLI command (e.g., typing 'my-game' in terminal)
+[project.scripts]
+my-game = "src.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]

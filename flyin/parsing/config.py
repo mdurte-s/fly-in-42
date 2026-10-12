@@ -221,3 +221,19 @@ class Config():
                 line=self._current_line
             )
         return info
+
+    @property
+    def nb_drones(self) -> list[Hub]:
+        return self._nb_drones
+
+    @property
+    def hubs(self) -> list[Hub]:
+        return self._hubs
+
+    @property
+    def connections(self) -> list[Hub]:
+        return self._connections
+
+    @property
+    def current_line(self) -> list[Hub]:
+        return self._current_line

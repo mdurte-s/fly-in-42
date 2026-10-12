@@ -37,5 +37,9 @@ class Hub():
         return self._zone
 
     @property
+    def color(self) -> str:
+        return self._color
+
+    @property
     def max_drones(self) -> int:
         return self._max_drones

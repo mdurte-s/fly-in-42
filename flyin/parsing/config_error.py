@@ -51,7 +51,10 @@ class StructError(ConfigError):
 class UsageError(ConfigError):
     """ Raised when the USAGE is invalid. """
 
-    EXPECTED_FORMAT = comment("Usage: ./main.py <path/config-file.txt>")
+    EXPECTED_FORMAT = comment(
+        "Usage: make install"
+        "\nmake run MAP=path/config-file.txt"
+        )
 
     def __init__(self,
                  message: str = EXPECTED_FORMAT,
