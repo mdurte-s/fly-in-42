@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any, Callable
 from ..models import Hub, Connection
 from ..utils import utils
 from .config_error import ConfigError, StructError
@@ -111,9 +112,9 @@ class Config():
             max_link_capacity=opts.get("max_link_capacity", "")
             )
 
-    def _hub_optional_criteria(self, optional: list[str]) -> dict:
+    def _hub_optional_criteria(self, optional: list[str]) -> dict[str, Any]:
 
-        CRITERIA = {
+        CRITERIA: dict[str, Callable[[str], Any]] = {
                 "zone": self._to_zone,
                 "color": self._to_color,
                 "max_drones": lambda val: self.to_int(val, 1, True)
@@ -133,9 +134,9 @@ class Config():
             params[key] = CRITERIA[key](value)
         return params
 
-    def _con_optional_criteria(self, optional: list[str]) -> dict:
+    def _con_optional_criteria(self, optional: list[str]) -> dict[str, Any]:
 
-        CRITERIA = {
+        CRITERIA: dict[str, Callable[[str], Any]] = {
                 "max_link_capacity": lambda val: self.to_int(val, 1, True)
             }
 
@@ -223,7 +224,7 @@ class Config():
         return info
 
     @property
-    def nb_drones(self) -> list[Hub]:
+    def nb_drones(self) -> int:
         return self._nb_drones
 
     @property
@@ -231,9 +232,9 @@ class Config():
         return self._hubs
 
     @property
-    def connections(self) -> list[Hub]:
+    def connections(self) -> list[Connection]:
         return self._connections
 
     @property
-    def current_line(self) -> list[Hub]:
+    def current_line(self) -> int:
         return self._current_line

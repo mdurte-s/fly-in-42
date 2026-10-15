@@ -34,8 +34,8 @@ class Graph():
             is_end: bool = False
             ) -> None:
         self._hubs[hub.name] = hub
-        self._start_hub = hub if is_start else False
-        self._end_hub = hub if is_end else False
+        self._start_hub = hub if is_start else None
+        self._end_hub = hub if is_end else None
 
     def add_connection(self, connection: Connection) -> None:
         self._connections.append(connection)
