@@ -44,6 +44,8 @@ class Config():
         except UnicodeDecodeError:
             raise ConfigError(utils.error("Not a readable text file."))
 
+        if len(cfg) < 4:
+            raise StructError()
         return cfg
 
     def to_hub(self, cfg: str) -> Hub:
