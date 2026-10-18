@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
 
-from sys import argv
-from parser import parser, Config, ConfigError, UsageError
+from sys import argv, exit
+
+try:
+    from flyin import (
+        MapParser,
+        Config,
+        ConfigError,
+        UsageError,
+        SimulationEngine,
+        SimulationError
+        )
+except ImportError as e:
+    print(f"\033[0;31m[Import Error]\033[0m {e}"
+          "\n\033[3;38;5;178m# Usage:"
+          "\n# make install"
+          "\n# make run MAP=path/config-file.txt\033[0m")
+    exit(1)
 
 
 def main(args: list[str]) -> int:
 
+    success: bool = True
+
     try:
         if len(args) != 2:
             raise UsageError()
-        cfg: Config = parser(args[1])
+        cfg: Config = MapParser(args[1]).cfg
+        engine = SimulationEngine(cfg)
+        engine.run()
 
-    except ConfigError as e:
+    except (ConfigError, SimulationError) as e:
+        success = False
         print("\033[1;31mFAILURE!"
               "\nYOU MAKE THE CAT VERY UNHAPPY 😿\033[0m"
               f"\n{e}")
-        return (0)
+        return (1)
 
-    print("\033[1;38;5;213mSUCCESS!"
-          "\nYOU MAKE THE CAT VERY HAPPY 😻\033[0m")
-
-    print(f"\nnb_drones = {cfg._nb_drones}\n")
-    for i, item in enumerate(cfg._hubs):
-        print(f"hub[{i}]: {item._name}")
-    print()
-    for i, item in enumerate(cfg._connections):
-        print(f"connection[{i}]: {item._hub1}-{item._hub2}")
-
+    finally:
+        if success:
+            print("\033[1;38;5;213mSUCCESS!"
+                  "\nYOU MAKE THE CAT VERY HAPPY 😻\033[0m")
     return (0)
 
 

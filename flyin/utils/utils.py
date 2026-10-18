@@ -3,15 +3,15 @@ def comment(msg: str) -> str:
 
 
 def error(msg: str) -> str:
-    return f"\033[3;31m[Error]\033[0m {msg}"
+    return f"\033[0;31m[Error]\033[0m {msg}"
 
 
 def m_error(msg: str) -> str:
-    return f"\033[3;31m[Mandatory Criteria Error]\033[0m {msg}"
+    return f"\033[0;31m[Mandatory Criteria Error]\033[0m {msg}"
 
 
 def op_error(msg: str) -> str:
-    return f"\033[3;31m[Optional Criteria Error]\033[0m {msg}"
+    return f"\033[0;31m[Optional Criteria Error]\033[0m {msg}"
 
 
 def bold(msg: str) -> str:
