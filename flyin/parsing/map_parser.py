@@ -20,10 +20,10 @@ class MapParser():
         for line, key, val in config:
             cfg._current_line = line
 
-            if key == "nb_drones" and not hub_init:
+            if key == "nb_drones" and not cfg.nb_drones and not hub_init:
                 cfg._nb_drones = cfg.to_int(val.strip(), 0, True)
 
-            elif (key == "start_hub" and not hub_init):
+            elif (cfg.nb_drones and key == "start_hub" and not hub_init):
                 new_start_hub: Hub = cfg.to_hub(val.strip())
                 cfg.hubs.append(new_start_hub)
                 hub_init = True
@@ -63,6 +63,12 @@ class MapParser():
             else:
                 raise StructError(line=line)
 
+        if not cfg.nb_drones:
+            raise StructError(message="Missing parameter nb_drones.")
+        if not cfg.hubs:
+            raise StructError(message="Missing parameters hubs.")
+        if not cfg.connections:
+            raise StructError(message="Missing parameters connections.")
         return (cfg)
 
     @property
