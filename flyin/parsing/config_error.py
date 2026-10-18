@@ -14,7 +14,11 @@ class ConfigError(Exception):
         if line:
             full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
-            full_message = message
+            if message != "Configuration Error":
+                full_message = f"{bold(f'[Configuration Error]')} {message}"
+            else:
+                full_message = message
+
         super().__init__(full_message)
 
 
@@ -44,7 +48,11 @@ class StructError(ConfigError):
         if line:
             full_message = f"{bold(f'[Line {line}]')} {message}"
         else:
-            full_message = message
+            if message is not self.EXPECTED_FORMAT:
+                full_message = f"{bold(f'[Structure Error]')} {message}"
+            else:
+                full_message = message
+
         super().__init__(full_message)
 
 

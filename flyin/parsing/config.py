@@ -11,7 +11,7 @@ class Config():
     _zones = ["normal", "restricted", "priority", "blocked"]
 
     def __init__(self) -> None:
-        self._nb_drones: int = -1
+        self._nb_drones: int = 0
         self._hubs: list[Hub] = []
         self._connections: list[Connection] = []
         self._current_line: int = 0

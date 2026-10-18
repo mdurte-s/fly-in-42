@@ -63,12 +63,9 @@ class MapParser():
             else:
                 raise StructError(line=line)
 
-        if not cfg.nb_drones:
-            raise StructError(message="Missing parameter nb_drones.")
-        if not cfg.hubs:
-            raise StructError(message="Missing parameters hubs.")
         if not cfg.connections:
-            raise StructError(message="Missing parameters connections.")
+            raise StructError(message="Missing connections!")
+
         return (cfg)
 
     @property
