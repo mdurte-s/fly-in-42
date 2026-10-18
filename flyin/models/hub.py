@@ -23,6 +23,7 @@ class Hub():
         self._visited: bool = False
         self._previous: Optional[Hub] = None
         self._cost: int = 0
+        self._occupancy: int = 0
 
     @property
     def name(self) -> str:
@@ -43,3 +44,14 @@ class Hub():
     @property
     def max_drones(self) -> int:
         return self._max_drones
+
+    @property
+    def cost(self) -> int:
+        return self._cost
+
+    @property
+    def occupancy(self) -> int:
+        return self._occupancy
+
+    def set_occupancy(self, occupancy: int) -> None:
+        self._occupancy = occupancy
