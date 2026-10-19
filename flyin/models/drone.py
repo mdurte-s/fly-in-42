@@ -24,7 +24,7 @@ class Drone():
         return self._current_hub
 
     @property
-    def in_transit_to(self) -> Hub:
+    def in_transit_to(self) -> Hub | None:
         return self._in_transit_to
 
     @property
@@ -42,7 +42,7 @@ class Drone():
     def set_current_hub(self, current_hub: Hub) -> None:
         self._current_hub = current_hub
 
-    def set_in_transit_to(self, in_transit_to: Hub) -> None:
+    def set_in_transit_to(self, in_transit_to: Hub | None) -> None:
         self._in_transit_to = in_transit_to
 
     def set_turns_remaining(self, turns_remaining: int) -> None:
