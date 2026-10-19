@@ -5,72 +5,101 @@ from .config_error import ConfigError, StructError
 
 
 class MapParser():
+    """Parser responsible for reading, validating, and converting map files
+    into Config.
+    """
 
     def __init__(self, filepath: str) -> None:
+        """Initialize the map parser with a target file path.
+
+        Args:
+            filepath (str): Path to the map configuration file.
+        """
         self._filepath: str = filepath
         self._cfg: Config = self._parser()
 
     def _parser(self) -> Config:
+        """Parse configuration tokens into validated hubs, connections, and
+        drones.
 
+        Returns:
+            Config: Fully validated Config instance.
+
+        Raises:
+            ConfigError: If duplicate hubs, coordinates, or connections are
+            found.
+            StructError: If syntax or structure requirements are violated.
+        """
         cfg = Config()
         config: list[tuple[int, str, str]] = cfg.read_config(self._filepath)
-        hub_init: bool = False
-        hub_end: bool = False
         conn_count: int = 0
+        connections_started: bool = False
 
         for line, key, val in config:
             cfg._current_line = line
 
-            is_nb_drones: bool = (key == "nb_drones" and
-                                  not cfg.nb_drones and
-                                  not hub_init
-                                  )
-            is_start_hub: bool = (cfg.nb_drones > 0 and
-                                  key == "start_hub" and
-                                  not hub_init
-                                  )
-            is_mid_or_end_hub: bool = ((key == "hub" or key == "end_hub") and
-                                       hub_init and
-                                       not hub_end
-                                       )
-            is_connection: bool = (key == "connection" and hub_end)
+            if not cfg.nb_drones:
+                if key == "nb_drones":
+                    cfg._nb_drones = cfg.to_int(val.strip(), 0, True)
+                    continue
+                else:
+                    raise StructError(line=line)
 
-            if is_nb_drones:
-                cfg._nb_drones = cfg.to_int(val.strip(), 0, True)
+            if key in ("start_hub", "end_hub", "hub"):
+                if connections_started:
+                    raise StructError(line=line)
 
-            elif is_start_hub:
-                new_start_hub: Hub = cfg.to_hub(val.strip())
-                cfg.hubs.append(new_start_hub)
-                hub_init = True
-
-            elif is_mid_or_end_hub:
-                new_hub: Hub = cfg.to_hub(val.strip())
-
-                if new_hub.name in [hub.name for hub in cfg.hubs]:
-                    raise ConfigError(utils.error(
-                        f"Hub named '{new_hub.name}' already exists."),
+                if key == "start_hub" and cfg.start_hub is not None:
+                    raise ConfigError(
+                        utils.error("Multiple start hubs defined."),
+                        line=line
+                    )
+                elif key == "end_hub" and cfg.end_hub is not None:
+                    raise ConfigError(
+                        utils.error("Multiple end hubs defined."),
                         line=line
                     )
 
-                if (new_hub.coordinates in [h.coordinates for h in cfg.hubs]):
-                    raise ConfigError(utils.error(
-                        f"Hub at {new_hub.coordinates} already exists."),
+                new_hub: Hub = cfg.to_hub(val.strip())
+
+                if new_hub.name in [hub.name for hub in cfg.hubs]:
+                    raise ConfigError(
+                        utils.error(f"Hub named '{new_hub.name}'"
+                                    "already exists."),
+                        line=line
+                    )
+
+                if new_hub.coordinates in [h.coordinates for h in cfg.hubs]:
+                    raise ConfigError(
+                        utils.error(f"Hub at {new_hub.coordinates}"
+                                    "already exists."),
                         line=line
                     )
 
                 cfg.hubs.append(new_hub)
-                hub_end = (True if key == "end_hub" else False)
+                if key == "start_hub":
+                    cfg._start_hub = new_hub
+                elif key == "end_hub":
+                    cfg._end_hub = new_hub
 
-            elif is_connection:
+            elif key == "connection":
+                if cfg.start_hub is None:
+                    raise StructError(message="Missing start_hub!", line=line)
+                if cfg.end_hub is None:
+                    raise StructError(message="Missing end_hub!", line=line)
+
+                connections_started = True
                 new_connection: Connection = cfg.to_connection(
                     val.strip(), conn_count
                 )
                 n = {new_connection.hub1.name, new_connection.hub2.name}
 
                 if n in [{c.hub1.name, c.hub2.name} for c in cfg.connections]:
-                    raise ConfigError(utils.m_error(
-                        f"Connection '{new_connection.hub1.name}"
-                        f"-{new_connection.hub2.name}' already exists."),
+                    raise ConfigError(
+                        utils.m_error(
+                            f"Connection '{new_connection.hub1.name}"
+                            f"-{new_connection.hub2.name}' already exists."
+                        ),
                         line=line
                     )
 
@@ -80,11 +109,16 @@ class MapParser():
             else:
                 raise StructError(line=line)
 
+        if cfg.start_hub is None:
+            raise StructError(message="Missing start_hub!")
+        if cfg.end_hub is None:
+            raise StructError(message="Missing end_hub!")
         if conn_count == 0:
             raise StructError(message="Missing connections!")
 
-        return (cfg)
+        return cfg
 
     @property
     def cfg(self) -> Config:
+        """Return the parsed Config instance."""
         return self._cfg

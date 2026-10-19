@@ -12,14 +12,25 @@ class SimulationEngine:
     """Simulation engine responsible for forwarding the drones turn by turn."""
 
     def __init__(self, cfg: Config, enable_gui: bool = True) -> None:
+        """Initialize the simulation engine with network configuration.
+
+        Args:
+            cfg (Config): Parsed map configuration.
+            enable_gui (bool): Whether to initialize and display Pygame GUI.
+
+        Raises:
+            SimulationError: If start or end hubs are not defined.
+        """
         self._cfg: Config = cfg
         self._hubs: list[Hub] = cfg.hubs
         self._connections: dict[int, Connection] = {
             conn.id: conn for conn in cfg.connections
             }
 
-        self._start_hub: Hub = self._hubs[0]
-        self._end_hub: Hub = self._hubs[-1]
+        if cfg.start_hub is None or cfg.end_hub is None:
+            raise SimulationError("Start or end hub not configured.")
+        self._start_hub: Hub = cfg.start_hub
+        self._end_hub: Hub = cfg.end_hub
 
         self._drones: list[Drone] = [
             Drone(id=i + 1, start_hub=self._start_hub)
@@ -37,7 +48,12 @@ class SimulationEngine:
             self._display = SimulationGUI(self._graph, self._drones)
 
     def run(self) -> None:
-        """Run the simulation until all drones reach the destination."""
+        """Calculate paths and run the simulation until all drones reach the
+        goal.
+
+        Raises:
+            PathFindingError: If no valid path from start to end can be found.
+        """
         p_finder: PathFinder = PathFinder(
             self._hubs, list(self._connections.values())
         )
@@ -54,7 +70,14 @@ class SimulationEngine:
         self._simulate(paths)
 
     def _simulate(self, paths: list[list[Hub]]) -> None:
-        """ Manages the movement of drones along multiple paths concurrently.
+        """Manage the step-by-step movement of drones along multiple paths.
+
+        Args:
+            paths (list[list[Hub]]): Candidate paths from start to end.
+
+        Raises:
+            SimulationError: If a simulation deadlock or unexpected state
+            occurs.
         """
 
         next_hub_maps: list[dict[str, Hub]] = [
@@ -97,14 +120,11 @@ class SimulationEngine:
                     )
 
                     if turn_available:
-                        drone.set_turns_remaining(max(1, target.cost))
+                        drone.set_turns_remaining(target.cost)
                         drone.set_in_transit_to(target)
 
                         if current.name != self._start_hub.name:
-                            current.set_occupancy(current.occupancy - 1)
-
-                        if target.name != self._end_hub.name:
-                            target.set_occupancy(target.occupancy + 1)
+                            current.decrease_occupancy()
 
                         if drone.turns_remaining == 2:
                             self._first_drone_turn_to_restricted_target(drone)
@@ -113,15 +133,29 @@ class SimulationEngine:
 
             if self._turn_movements:
                 self._show_turn_movements(clock)
+            else:
+                raise SimulationError(
+                    "Simulation deadlock: No drones can move."
+                    )
 
             active_drones = [d for d in active_drones if d.is_active]
             if not active_drones:
                 break
 
+        # from ..utils import bold
+        # print(bold(f"[nb_turns: {self._nb_turns}]"))
         if isinstance(self._display, SimulationGUI):
             self._end_display(clock)
 
     def _drone_turn_to_target(self, drone: Drone) -> None:
+        """Execute drone arrival at its target zone.
+
+        Args:
+            drone (Drone): The active drone completing its move.
+
+        Raises:
+            SimulationError: If target hub is invalid or undefined.
+        """
         current: Hub = drone.current_hub
         target: Hub | None = drone.in_transit_to
 
@@ -134,9 +168,12 @@ class SimulationEngine:
             drone.set_current_hub(target)
             drone.set_in_transit_to(None)
             drone.set_turns_remaining(0)
+            drone.set_in_intermediate_transit(False)
 
             if (target.name == self._end_hub.name):
                 drone.set_arrived(True)
+            else:
+                target.increase_occupancy()
 
             self._connections[id].increase_link()
 
@@ -144,14 +181,23 @@ class SimulationEngine:
             raise SimulationError()
 
     def _first_drone_turn_to_restricted_target(self, drone: Drone) -> None:
+        """Execute first turn of multi-turn movement into a restricted zone.
+
+        Args:
+            drone (Drone): The drone entering the connection in transit.
+
+        Raises:
+            SimulationError: If target hub is invalid or undefined.
+        """
         current: Hub = drone.current_hub
         target: Hub | None = drone.in_transit_to
+        drone.set_in_intermediate_transit(True)
 
         if isinstance(target, Hub):
             id: int = self._find_conn_id(current.name, target.name)
 
             self._turn_movements.append(
-                f"{drone.name}-{current.name}-{target.name}"
+                f"{drone.name}-{current.name}_{target.name}"
                 )
             self._moved_in_this_turn.add(drone.name)
 
@@ -163,6 +209,7 @@ class SimulationEngine:
             raise SimulationError()
 
     def _init_new_turn(self) -> None:
+        """Reset turn movements, moved drones set, and link capacities."""
         self._turn_movements = []
         self._moved_in_this_turn = set()
 
@@ -170,6 +217,11 @@ class SimulationEngine:
             conn.reset_link()
 
     def _show_turn_movements(self, clock: Any) -> None:
+        """Print simulation turn movements and update GUI if enabled.
+
+        Args:
+            clock (Any): Pygame clock object for frame timing.
+        """
         self._nb_turns += 1
         print(" ".join(self._turn_movements))
 
@@ -180,7 +232,14 @@ class SimulationEngine:
             self._display.animate_turn(clock, fps=60)
 
     def _end_display(self, clock: Any) -> None:
+        """Display final completion state and wait for window close event.
 
+        Args:
+            clock (Any): Pygame clock object.
+
+        Raises:
+            SimulationError: If display is not a SimulationGUI instance.
+        """
         if isinstance(self._display, SimulationGUI):
             self._display.mark_completed()
             self._display.update_simulation_state(self._nb_turns, self._drones)
@@ -200,7 +259,18 @@ class SimulationEngine:
             raise SimulationError()
 
     def _find_conn_id(self, hub_a: str, hub_b: str) -> int:
+        """Find the connection ID linking two named hubs.
 
+        Args:
+            hub_a (str): First hub name.
+            hub_b (str): Second hub name.
+
+        Returns:
+            int: Connection identifier integer.
+
+        Raises:
+            SimulationError: If no connection exists between the two hubs.
+        """
         for connection in self._connections.values():
             if {hub_a, hub_b} == {connection.hub1.name, connection.hub2.name}:
                 return connection.id
