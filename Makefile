@@ -34,5 +34,5 @@ lint:
 
 # Optional rule for extra verification
 lint-strict:
-	flake8 .
-	mypy --strict .
+	poetry run flake8 .
+	poetry run mypy --strict .

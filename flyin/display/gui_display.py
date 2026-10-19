@@ -30,7 +30,7 @@ class SimulationGUI:
 
     def __init__(
             self, graph: Graph, drones: list[Drone],
-            width: int = 00, height: int = 80,
+            width: int = 800, height: int = 600,
             animation_speed: float = 0.5
             ) -> None:
         pygame.init()
@@ -46,12 +46,16 @@ class SimulationGUI:
         )
         pygame.display.set_caption("Fly-in Simulation")
 
-        self._font: pygame.font.Font = pygame.font.SysFont(
-            "Arial", 11, bold=True
+        try:
+            self._font: pygame.font.Font = pygame.font.SysFont(
+                "Arial", 11, bold=True
             )
-        self._title_font: pygame.font.Font = pygame.font.SysFont(
-            "Arial", 20, bold=True
+            self._title_font: pygame.font.Font = pygame.font.SysFont(
+                "Arial", 20, bold=True
             )
+        except Exception:
+            self._font = pygame.font.Font(None, 14)
+            self._title_font = pygame.font.Font(None, 24)
 
         self._is_finished: bool = False
         self._start_time: float = time.time()
@@ -102,18 +106,25 @@ class SimulationGUI:
         self._turn_start_time = time.time()
 
         for drone in drones:
-
             start_coords = self._drone_positions.get(
                 drone.name, drone.current_hub.coordinates
             )
-            end_coords = drone.current_hub.coordinates
+
+            if drone.is_in_intermediate_transit and drone.in_transit_to:
+                dest_coords = drone.in_transit_to.coordinates
+                end_coords = (
+                    (start_coords[0] + dest_coords[0]) / 2.0,
+                    (start_coords[1] + dest_coords[1]) / 2.0
+                )
+            elif drone.in_transit_to:
+                end_coords = drone.in_transit_to.coordinates
+            else:
+                end_coords = drone.current_hub.coordinates
 
             self._drone_trajectories[drone.name] = (start_coords, end_coords)
 
-        self._drones = drones
-
     def animate_turn(self, clock: pygame.time.Clock, fps: int = 60) -> bool:
-        """ Smoothly render frames and finalize drone arrival coordinates. """
+        """Smoothly render frames and finalize drone arrival coordinates."""
         while True:
             elapsed = time.time() - self._turn_start_time
 
@@ -125,7 +136,9 @@ class SimulationGUI:
                 break
 
         for d in self._drones:
-            self._drone_positions[d.name] = d.current_hub.coordinates
+            if d.name in self._drone_trajectories:
+                _, end_coords = self._drone_trajectories[d.name]
+                self._drone_positions[d.name] = end_coords
 
         return True
 
@@ -209,21 +222,21 @@ class SimulationGUI:
             pos1 = self._map_to_screen(*conn.hub1.coordinates)
             pos2 = self._map_to_screen(*conn.hub2.coordinates)
 
-            target_zone = conn.hub2.zone
+            zones = {conn.hub1.zone, conn.hub2.zone}
 
-            if target_zone == "priority":
+            if "blocked" in zones:
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["green"], pos1, pos2,
+                    self._screen, self.COLOR_MAP["red"], pos1, pos2,
                     thickness
                 )
-            elif target_zone == "restricted":
+            elif "restricted" in zones:
                 pygame.draw.line(
                     self._screen, self.COLOR_MAP["yellow"], pos1, pos2,
                     thickness
                 )
-            elif target_zone == "blocked":
+            elif "priority" in zones:
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["red"], pos1, pos2,
+                    self._screen, self.COLOR_MAP["green"], pos1, pos2,
                     thickness
                 )
             else:

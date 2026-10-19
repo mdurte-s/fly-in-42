@@ -22,9 +22,9 @@ dev = [
     "mypy",
 ]
 
-# Allows running your game directly via CLI command (e.g., typing 'my-game' in terminal)
+# Allows running your project directly via CLI command (e.g., typing 'flyin' in terminal)
 [project.scripts]
-my-game = "src.main:main"
+flyin = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
