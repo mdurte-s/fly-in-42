@@ -76,7 +76,7 @@ class Config():
             max_drones=opts.get("max_drones", 1)
             )
 
-    def to_connection(self, cfg: str) -> Connection:
+    def to_connection(self, cfg: str, id: int) -> Connection:
 
         if "[" in cfg:
             if not cfg.endswith("]"):
@@ -109,9 +109,10 @@ class Config():
                     line=self._current_line)
 
         return Connection(
+            id=id,
             hub1=next((h for h in self._hubs if h.name == mandatory[0])),
             hub2=next((h for h in self._hubs if h.name == mandatory[1])),
-            max_link_capacity=opts.get("max_link_capacity", "")
+            max_link_capacity=opts.get("max_link_capacity", 1)
             )
 
     def _hub_optional_criteria(self, optional: list[str]) -> dict[str, Any]:

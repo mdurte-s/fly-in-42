@@ -5,7 +5,7 @@ from ..models import Hub, Connection, Drone, Graph
 from ..parsing import Config
 from ..display import SimulationGUI
 from .pathfinding import PathFinder
-from .simulation_error import PathFindingError
+from .simulation_error import SimulationError, PathFindingError
 
 
 class SimulationEngine:
@@ -14,7 +14,9 @@ class SimulationEngine:
     def __init__(self, cfg: Config, enable_gui: bool = True) -> None:
         self._cfg: Config = cfg
         self._hubs: list[Hub] = cfg.hubs
-        self._connections: list[Connection] = cfg.connections
+        self._connections: dict[int, Connection] = {
+            conn.id: conn for conn in cfg.connections
+            }
 
         self._start_hub: Hub = self._hubs[0]
         self._end_hub: Hub = self._hubs[-1]
@@ -36,7 +38,9 @@ class SimulationEngine:
 
     def run(self) -> None:
         """Run the simulation until all drones reach the destination."""
-        p_finder: PathFinder = PathFinder(self._hubs, self._connections)
+        p_finder: PathFinder = PathFinder(
+            self._hubs, list(self._connections.values())
+        )
 
         paths: list[list[Hub]] = p_finder.find_paths(
             self._start_hub.name,
@@ -58,13 +62,13 @@ class SimulationEngine:
             for path in paths
         ]
 
-        for id, drone in enumerate(self._drones):
-            drone.set_path_id(id % len(paths))
+        for drone_id, drone in enumerate(self._drones):
+            drone.set_path_id(drone_id % len(paths))
 
         active_drones: list[Drone] = list(self._drones)
         clock = pygame.time.Clock()
 
-        if self._display:
+        if isinstance(self._display, SimulationGUI):
             self._display.update_simulation_state(self._nb_turns, self._drones)
             self._display.render_frame()
 
@@ -82,14 +86,17 @@ class SimulationEngine:
 
                 if current.name in assigned_map:
                     target: Hub = assigned_map[current.name]
+                    id: int = self._find_conn_id(current.name, target.name)
+                    conn: Connection = self._connections[id]
 
-                    drone_available: bool = (
+                    turn_available: bool = (
                         (target.name == self._end_hub.name or
                          target.occupancy < target.max_drones) and
-                        drone.name not in self._moved_in_this_turn
+                        drone.name not in self._moved_in_this_turn and
+                        conn.link_capacity < conn.max_link_capacity
                     )
 
-                    if drone_available:
+                    if turn_available:
                         drone.set_turns_remaining(max(1, target.cost))
                         drone.set_in_transit_to(target)
 
@@ -111,57 +118,91 @@ class SimulationEngine:
             if not active_drones:
                 break
 
-        if self._display:
+        if isinstance(self._display, SimulationGUI):
             self._end_display(clock)
 
     def _drone_turn_to_target(self, drone: Drone) -> None:
-        target: Hub = drone.in_transit_to
+        current: Hub = drone.current_hub
+        target: Hub | None = drone.in_transit_to
 
-        self._turn_movements.append(f"{drone.name}-{target.name}")
-        self._moved_in_this_turn.add(drone.name)
+        if isinstance(target, Hub):
+            id: int = self._find_conn_id(current.name, target.name)
 
-        drone.set_current_hub(target)
-        drone.set_in_transit_to(None)
-        drone.set_turns_remaining(0)
+            self._turn_movements.append(f"{drone.name}-{target.name}")
+            self._moved_in_this_turn.add(drone.name)
 
-        if (target.name == self._end_hub.name):
-            drone.set_arrived(True)
+            drone.set_current_hub(target)
+            drone.set_in_transit_to(None)
+            drone.set_turns_remaining(0)
+
+            if (target.name == self._end_hub.name):
+                drone.set_arrived(True)
+
+            self._connections[id].increase_link()
+
+        else:
+            raise SimulationError()
 
     def _first_drone_turn_to_restricted_target(self, drone: Drone) -> None:
-        target: Hub = drone.in_transit_to
         current: Hub = drone.current_hub
+        target: Hub | None = drone.in_transit_to
 
-        self._turn_movements.append(
-             f"{drone.name}-{current.name}-{target.name}"
-             )
-        self._moved_in_this_turn.add(drone.name)
-        drone.set_turns_remaining(1)
+        if isinstance(target, Hub):
+            id: int = self._find_conn_id(current.name, target.name)
+
+            self._turn_movements.append(
+                f"{drone.name}-{current.name}-{target.name}"
+                )
+            self._moved_in_this_turn.add(drone.name)
+
+            drone.set_turns_remaining(1)
+
+            self._connections[id].increase_link()
+
+        else:
+            raise SimulationError()
 
     def _init_new_turn(self) -> None:
         self._turn_movements = []
         self._moved_in_this_turn = set()
 
+        for conn in self._connections.values():
+            conn.reset_link()
+
     def _show_turn_movements(self, clock: Any) -> None:
         self._nb_turns += 1
         print(" ".join(self._turn_movements))
 
-        if self._display:
+        if isinstance(self._display, SimulationGUI):
             self._display.update_simulation_state(
                 self._nb_turns, self._drones
             )
             self._display.animate_turn(clock, fps=60)
 
-    def _end_display(self, clock) -> None:
-        self._display.mark_completed()
-        self._display.update_simulation_state(self._nb_turns, self._drones)
+    def _end_display(self, clock: Any) -> None:
 
-        print("\nSimulation complete. Close the GUI window to exit.")
+        if isinstance(self._display, SimulationGUI):
+            self._display.mark_completed()
+            self._display.update_simulation_state(self._nb_turns, self._drones)
 
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit(0)
+            print("\nSimulation complete. Close the GUI window to exit.")
 
-            self._display.render_frame()
-            clock.tick(30)
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit(0)
+
+                self._display.render_frame()
+                clock.tick(30)
+
+        else:
+            raise SimulationError()
+
+    def _find_conn_id(self, hub_a: str, hub_b: str) -> int:
+
+        for connection in self._connections.values():
+            if {hub_a, hub_b} == {connection.hub1.name, connection.hub2.name}:
+                return connection.id
+
+        raise SimulationError()

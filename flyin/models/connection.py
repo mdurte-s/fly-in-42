@@ -11,12 +11,18 @@ class Connection():
         )
 
     def __init__(
-            self, hub1: Hub, hub2: Hub, max_link_capacity: int = 1
+            self, id: int, hub1: Hub, hub2: Hub, max_link_capacity: int = 1
             ) -> None:
 
+        self._id: int = id
         self._hub1: Hub = hub1
         self._hub2: Hub = hub2
         self._max_link_capacity: int = max_link_capacity
+        self._link_capacity: int = 0
+
+    @property
+    def id(self) -> int:
+        return self._id
 
     @property
     def hub1(self) -> Hub:
@@ -29,3 +35,13 @@ class Connection():
     @property
     def max_link_capacity(self) -> int:
         return self._max_link_capacity
+
+    @property
+    def link_capacity(self) -> int:
+        return self._link_capacity
+
+    def increase_link(self, increament: int = 1) -> None:
+        self._link_capacity += increament
+
+    def reset_link(self) -> None:
+        self._link_capacity = 0

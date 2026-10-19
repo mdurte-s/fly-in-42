@@ -82,12 +82,15 @@ class SimulationGUI:
 
     @property
     def _hub_radius(self) -> int:
-        """Calculate hub radius based on screen size (12px for small, 20px for normal)."""
+        """ Calculate hub radius based on screen size
+        (12px for small, 20px for normal).
+        """
         return 12 if self._is_small_window else 20
 
     @property
     def _connection_thickness(self) -> int:
-        """Connection thickness is strictly equal to the diameter of the hub."""
+        """Connection thickness is strictly equal to the diameter of the hub.
+        """
         return self._hub_radius * 2
 
     def update_simulation_state(
@@ -133,7 +136,8 @@ class SimulationGUI:
             self._final_time = time.time() - self._start_time
 
     def _get_drone_current_pixel_pos(self, drone: Drone) -> tuple[int, int]:
-        """ Interpolate real-time pixel position between start and end hubs. """
+        """ Interpolate real-time pixel position between start and end hubs.
+        """
         if drone.name not in self._drone_trajectories:
             return self._map_to_screen(*drone.current_hub.coordinates)
 
@@ -209,19 +213,23 @@ class SimulationGUI:
 
             if target_zone == "priority":
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["green"], pos1, pos2, thickness
+                    self._screen, self.COLOR_MAP["green"], pos1, pos2,
+                    thickness
                 )
             elif target_zone == "restricted":
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["yellow"], pos1, pos2, thickness
+                    self._screen, self.COLOR_MAP["yellow"], pos1, pos2,
+                    thickness
                 )
             elif target_zone == "blocked":
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["red"], pos1, pos2, thickness
+                    self._screen, self.COLOR_MAP["red"], pos1, pos2,
+                    thickness
                 )
             else:
                 pygame.draw.line(
-                    self._screen, self.COLOR_MAP["white"], pos1, pos2, thickness
+                    self._screen, self.COLOR_MAP["white"], pos1, pos2,
+                    thickness
                 )
 
     def _should_hide_label(self) -> bool:
@@ -245,7 +253,7 @@ class SimulationGUI:
         sample_label = self._hubs[0].name
         lable_pixel_width = self._font.size(sample_label)[0]
 
-        return min_pixel_distance < lable_pixel_width + 10
+        return bool(min_pixel_distance < lable_pixel_width + 10)
 
     def _draw_hubs(self) -> None:
         """ Draw hub circles and conditionally render names based on window
