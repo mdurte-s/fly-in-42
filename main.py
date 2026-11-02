@@ -85,7 +85,7 @@ def main(args: list[str]) -> int:
     finally:
         if success:
             print("\n\033[1;38;5;213mSUCCESS!"
-                  "\nYOU MAKE THE CAT VERY HAPPY 😻\033[0m")
+                  "\nYOU MAKE THE CAT VERY HAPPY 😻 \033[0m")
     return 0
 
 
