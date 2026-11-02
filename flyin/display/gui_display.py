@@ -1,7 +1,8 @@
 import sys
 import time
 import pygame
-from ..models import Hub, Drone, Graph
+from ..models import Drone
+from ..parsing import Config
 
 
 class SimulationGUI:
@@ -29,15 +30,14 @@ class SimulationGUI:
     MAX_WIDTH, MAX_HEIGHT = 1920, 1080
 
     def __init__(
-            self, graph: Graph, drones: list[Drone],
-            width: int = 800, height: int = 600,
+            self, cfg: Config, drones: list[Drone],
+            width: int = 1200, height: int = 1000,
             animation_speed: float = 0.5
             ) -> None:
         pygame.init()
         pygame.font.init()
 
-        self._graph: Graph = graph
-        self._hubs: list[Hub] = list(self._graph.hubs.values())
+        self._cfg: Config = cfg
         self._width: int = max(self.MIN_WIDTH, min(width, self.MAX_WIDTH))
         self._height: int = max(self.MIN_HEIGHT, min(height, self.MAX_HEIGHT))
 
@@ -169,8 +169,8 @@ class SimulationGUI:
 
     def _update_coordinate_bounds(self) -> None:
         """Calculate graph bounds with independent non-uniform scaling."""
-        x_coords = [hub.coordinates[0] for hub in self._graph.hubs.values()]
-        y_coords = [hub.coordinates[1] for hub in self._graph.hubs.values()]
+        x_coords = [hub.coordinates[0] for hub in self._cfg.hubs]
+        y_coords = [hub.coordinates[1] for hub in self._cfg.hubs]
 
         if not x_coords or not y_coords:
             return
@@ -218,7 +218,7 @@ class SimulationGUI:
         """Draw connection lines with thickness matching the hub diameter."""
         thickness = self._connection_thickness
 
-        for conn in self._graph.connections:
+        for conn in self._cfg.connections:
             pos1 = self._map_to_screen(*conn.hub1.coordinates)
             pos2 = self._map_to_screen(*conn.hub2.coordinates)
 
@@ -251,11 +251,11 @@ class SimulationGUI:
         if self._width >= 1000 and self._height >= 750:
             return False
 
-        if len(self._hubs) < 2:
+        if len(self._cfg.hubs) < 2:
             return False
 
         min_pixel_distance = float("inf")
-        for conn in self._graph.connections:
+        for conn in self._cfg.connections:
             pos1 = self._map_to_screen(*conn.hub1.coordinates)
             pos2 = self._map_to_screen(*conn.hub2.coordinates)
 
@@ -263,7 +263,7 @@ class SimulationGUI:
             if 0 < dx < min_pixel_distance:
                 min_pixel_distance = dx
 
-        sample_label = self._hubs[0].name
+        sample_label = self._cfg.hubs[0].name
         lable_pixel_width = self._font.size(sample_label)[0]
 
         return bool(min_pixel_distance < lable_pixel_width + 10)
@@ -274,7 +274,7 @@ class SimulationGUI:
         radius: int = self._hub_radius
         show_names: bool = not self._should_hide_label()
 
-        for i, hub in enumerate(self._hubs):
+        for i, hub in enumerate(self._cfg.hubs):
             pos = self._map_to_screen(*hub.coordinates)
             hub_color = self._get_rgb_color(hub.color, self.COLOR_MAP["blue"])
 

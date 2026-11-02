@@ -1,7 +1,7 @@
 import sys
 import pygame
 from typing import Any
-from ..models import Hub, Connection, Drone, Graph
+from ..models import Hub, Connection, Drone
 from ..parsing import Config
 from ..display import SimulationGUI
 from .pathfinding import PathFinder
@@ -41,11 +41,10 @@ class SimulationEngine:
         self._turn_movements: list[str] = []
         self._moved_in_this_turn: set[str] = set()
 
-        self._graph: Graph = Graph.from_config(cfg)
         self._display: SimulationGUI | None = None
 
         if enable_gui:
-            self._display = SimulationGUI(self._graph, self._drones)
+            self._display = SimulationGUI(self._cfg, self._drones)
 
     def run(self) -> None:
         """Calculate paths and run the simulation until all drones reach the
@@ -61,7 +60,7 @@ class SimulationEngine:
         paths: list[list[Hub]] = p_finder.find_paths(
             self._start_hub.name,
             self._end_hub.name,
-            5
+            4
         )
 
         if not paths or not paths[0]:
@@ -101,7 +100,7 @@ class SimulationEngine:
             for drone in active_drones:
 
                 if drone.turns_remaining == 1 and drone.in_transit_to:
-                    self._drone_turn_to_target(drone)
+                    self._drone_turn_to_target(drone, True)
                     continue
 
                 current: Hub = drone.current_hub
@@ -111,10 +110,11 @@ class SimulationEngine:
                     target: Hub = assigned_map[current.name]
                     id: int = self._find_conn_id(current.name, target.name)
                     conn: Connection = self._connections[id]
+                    d_placed: int = target.occupancy + target.spots_reserved
 
                     turn_available: bool = (
                         (target.name == self._end_hub.name or
-                         target.occupancy < target.max_drones) and
+                         d_placed < target.max_drones) and
                         drone.name not in self._moved_in_this_turn and
                         conn.link_capacity < conn.max_link_capacity
                     )
@@ -142,12 +142,12 @@ class SimulationEngine:
             if not active_drones:
                 break
 
-        # from ..utils import bold
-        # print(bold(f"[nb_turns: {self._nb_turns}]"))
         if isinstance(self._display, SimulationGUI):
             self._end_display(clock)
 
-    def _drone_turn_to_target(self, drone: Drone) -> None:
+    def _drone_turn_to_target(
+            self, drone: Drone, reserved: bool = False
+            ) -> None:
         """Execute drone arrival at its target zone.
 
         Args:
@@ -177,6 +177,9 @@ class SimulationEngine:
 
             self._connections[id].increase_link()
 
+            if reserved:
+                target.decrease_spots_reserved()
+
         else:
             raise SimulationError()
 
@@ -197,13 +200,14 @@ class SimulationEngine:
             id: int = self._find_conn_id(current.name, target.name)
 
             self._turn_movements.append(
-                f"{drone.name}-{current.name}_{target.name}"
+                f"{drone.name}-{current.name}-{target.name}"
                 )
             self._moved_in_this_turn.add(drone.name)
 
             drone.set_turns_remaining(1)
 
             self._connections[id].increase_link()
+            target.increase_spots_reserved()
 
         else:
             raise SimulationError()

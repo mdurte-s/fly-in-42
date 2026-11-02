@@ -61,7 +61,7 @@ class PathFinder:
     def dijkstra(
             self, start_name: str, end_name: str, penalties: dict[str, float]
             ) -> list[Hub]:
-        """Calculate shortest path using lowest weighted cost and node
+        """Calculate the shortest paths using lowest weighted cost and node
         penalties.
 
         Args:
