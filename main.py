@@ -74,7 +74,8 @@ def main(args: list[str]) -> int:
 
     except KeyboardInterrupt:
         success = False
-        print("\n\033[1;33mSimulation interrupted by user.\033[0m")
+        print("\n\033[1;33m[KeyboardInterrupt]\033[0m"
+              "Simulation interrupted by user.")
         return 1
 
     except Exception as e:
