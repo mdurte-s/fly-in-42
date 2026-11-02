@@ -20,6 +20,7 @@ class Drone():
         self._in_transit_to: Optional[Hub] = None
         self._is_in_intermediate_transit: bool = False
         self._turns_remaining: int = 0
+        self._turns_count: int = 0
         self._arrived: bool = False
         self._path_id: int = 0
 
@@ -56,6 +57,11 @@ class Drone():
         return self._turns_remaining
 
     @property
+    def turns_count(self) -> int:
+        """Return current turns count."""
+        return self._turns_count
+
+    @property
     def path_id(self) -> int:
         """Return the assigned candidate path index for this drone."""
         return self._path_id
@@ -88,6 +94,14 @@ class Drone():
             turns_remaining (int): Number of turns left.
         """
         self._turns_remaining = turns_remaining
+
+    def increase_turns_count(self, turns: int = 1) -> None:
+        """Increase the turns counter for the current drone.
+
+        Args:
+            increament (int): Usage increment amount (default: 1).
+        """
+        self._turns_count += turns
 
     def set_arrived(self, arrived: bool) -> None:
         """Mark whether the drone has reached the end zone.

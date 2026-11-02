@@ -14,6 +14,14 @@ install:
 run:
 	poetry run python $(MAIN) $(MAP)
 
+# Rule to execute the main program with GUI (accepts optional MAP argument: make run MAP=maps/...)
+display:
+	poetry run python $(MAIN) $(MAP) --gui
+
+# Rule to execute the main program with statistics (accepts optional MAP argument: make run MAP=maps/...)
+statistics:
+	poetry run python $(MAIN) $(MAP) --statistics
+
 # Rule to run the program in debug mode using pdb
 debug:
 	poetry run python -m pdb $(MAIN) $(MAP)

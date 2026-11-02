@@ -4,6 +4,7 @@ from typing import Any
 from ..models import Hub, Connection, Drone
 from ..parsing import Config
 from ..display import SimulationGUI
+from ..utils import bold
 from .pathfinding import PathFinder
 from .simulation_error import SimulationError, PathFindingError
 
@@ -11,7 +12,10 @@ from .simulation_error import SimulationError, PathFindingError
 class SimulationEngine:
     """Simulation engine responsible for forwarding the drones turn by turn."""
 
-    def __init__(self, cfg: Config, enable_gui: bool = True) -> None:
+    def __init__(
+            self, cfg: Config, enable_gui: bool = False,
+            statistics: bool = False
+            ) -> None:
         """Initialize the simulation engine with network configuration.
 
         Args:
@@ -40,9 +44,11 @@ class SimulationEngine:
         self._nb_turns: int = 0
         self._turn_movements: list[str] = []
         self._moved_in_this_turn: set[str] = set()
+        self._turns: dict[str, int] = {}
+
+        self._statistics: bool = statistics
 
         self._display: SimulationGUI | None = None
-
         if enable_gui:
             self._display = SimulationGUI(self._cfg, self._drones)
 
@@ -121,6 +127,7 @@ class SimulationEngine:
 
                     if turn_available:
                         drone.set_turns_remaining(target.cost)
+                        drone.increase_turns_count(target.cost)
                         drone.set_in_transit_to(target)
 
                         if current.name != self._start_hub.name:
@@ -142,8 +149,30 @@ class SimulationEngine:
             if not active_drones:
                 break
 
+        print("\n\033[0;32m[OK] ✅\033[0m")
+        if self._statistics:
+            self._show_statistics()
         if isinstance(self._display, SimulationGUI):
             self._end_display(clock)
+
+    def _find_conn_id(self, hub_a: str, hub_b: str) -> int:
+        """Find the connection ID linking two named hubs.
+
+        Args:
+            hub_a (str): First hub name.
+            hub_b (str): Second hub name.
+
+        Returns:
+            int: Connection identifier integer.
+
+        Raises:
+            SimulationError: If no connection exists between the two hubs.
+        """
+        for connection in self._connections.values():
+            if {hub_a, hub_b} == {connection.hub1.name, connection.hub2.name}:
+                return connection.id
+
+        raise SimulationError()
 
     def _drone_turn_to_target(
             self, drone: Drone, reserved: bool = False
@@ -227,13 +256,26 @@ class SimulationEngine:
             clock (Any): Pygame clock object for frame timing.
         """
         self._nb_turns += 1
-        print(" ".join(self._turn_movements))
+        turn = bold(f"Turn {self._nb_turns}")
+        movements: str = " ".join(self._turn_movements)
+        print(f"{turn}: {movements}")
 
         if isinstance(self._display, SimulationGUI):
             self._display.update_simulation_state(
                 self._nb_turns, self._drones
             )
             self._display.animate_turn(clock, fps=60)
+
+    def _show_statistics(self) -> None:
+        """Print simulation statistics."""
+
+        print(bold("\n4. Statistics:"))
+        print(f" • Total turns: {self._nb_turns}")
+        turns_sum = 0
+        for drone in self._drones:
+            turns_sum += drone.turns_count
+        average_turns_per_drone = turns_sum / self._cfg.nb_drones
+        print(f" • Average turns per drone: {average_turns_per_drone}")
 
     def _end_display(self, clock: Any) -> None:
         """Display final completion state and wait for window close event.
@@ -248,7 +290,8 @@ class SimulationEngine:
             self._display.mark_completed()
             self._display.update_simulation_state(self._nb_turns, self._drones)
 
-            print("\nSimulation complete. Close the GUI window to exit.")
+            print(f"\n{bold('Simulation complete!')}"
+                  "\nClose the GUI window to exit.")
 
             while True:
                 for event in pygame.event.get():
@@ -261,22 +304,3 @@ class SimulationEngine:
 
         else:
             raise SimulationError()
-
-    def _find_conn_id(self, hub_a: str, hub_b: str) -> int:
-        """Find the connection ID linking two named hubs.
-
-        Args:
-            hub_a (str): First hub name.
-            hub_b (str): Second hub name.
-
-        Returns:
-            int: Connection identifier integer.
-
-        Raises:
-            SimulationError: If no connection exists between the two hubs.
-        """
-        for connection in self._connections.values():
-            if {hub_a, hub_b} == {connection.hub1.name, connection.hub2.name}:
-                return connection.id
-
-        raise SimulationError()
