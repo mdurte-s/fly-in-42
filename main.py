@@ -52,22 +52,21 @@ def main(args: list[str]) -> int:
 
         print("\n\033[1m1. configuration file parsing:\033[0m", end=" ")
         cfg: Config = MapParser(map_path).cfg
-        print("\033[0;32m[OK] ✅\033[0m")
+        print("\033[0;32m[OK]\033[0m")
 
         print("\n\033[1m2. starting engine:\033[0m", end=" ")
         engine = SimulationEngine(
             cfg, enable_gui=enable_gui, statistics=statistics
             )
-        print("\033[0;32m[OK] ✅\033[0m")
+        print("\033[0;32m[OK]\033[0m")
 
-        print("\n\033[1m3. running engine:\n\033[0m")
+        print("\n\033[1m3. running engine:\033[0m\n")
         engine.run()
         success = True
 
     except (ConfigError, SimulationError) as e:
         success = False
-        print("[KO] ❌\n"
-              f"\n{e}"
+        print(f"{e}"
               "\n\n\033[1;31mFAILURE!"
               "\nYOU MAKE THE CAT VERY UNHAPPY 😿\033[0m"
               )

@@ -1,10 +1,9 @@
-import sys
 import pygame
 from typing import Any
 from ..models import Hub, Connection, Drone
 from ..parsing import Config
 from ..display import SimulationGUI
-from ..utils import bold
+from ..utils import bold, error
 from .pathfinding import PathFinder
 from .simulation_error import SimulationError, PathFindingError
 
@@ -44,7 +43,7 @@ class SimulationEngine:
         self._nb_turns: int = 0
         self._turn_movements: list[str] = []
         self._moved_in_this_turn: set[str] = set()
-        self._turns: dict[str, int] = {}
+        self._drones_per_turn: list[int] = []
 
         self._statistics: bool = statistics
 
@@ -70,7 +69,7 @@ class SimulationEngine:
         )
 
         if not paths or not paths[0]:
-            raise PathFindingError("No valid path found")
+            raise PathFindingError(error("No valid path found."))
 
         self._simulate(paths)
 
@@ -138,11 +137,13 @@ class SimulationEngine:
                         else:
                             self._drone_turn_to_target(drone)
 
+            self._drones_per_turn.append(len(self._moved_in_this_turn))
+
             if self._turn_movements:
                 self._show_turn_movements(clock)
             else:
                 raise SimulationError(
-                    "Simulation deadlock: No drones can move."
+                    error("Simulation deadlock: No drones can move.")
                     )
 
             active_drones = [d for d in active_drones if d.is_active]
@@ -271,11 +272,18 @@ class SimulationEngine:
 
         print(bold("\n4. Statistics:"))
         print(f" • Total turns: {self._nb_turns}")
+
         turns_sum = 0
         for drone in self._drones:
             turns_sum += drone.turns_count
         average_turns_per_drone = turns_sum / self._cfg.nb_drones
-        print(f" • Average turns per drone: {average_turns_per_drone}")
+        print(f" • Average turns per drone: {average_turns_per_drone:.0f}")
+
+        drones_sum = 0
+        for drones in self._drones_per_turn:
+            drones_sum += drones
+        average_drones_per_turn = drones_sum / self._nb_turns
+        print(f" • Average drones per turn: {average_drones_per_turn:.0f}")
 
     def _end_display(self, clock: Any) -> None:
         """Display final completion state and wait for window close event.
@@ -293,14 +301,15 @@ class SimulationEngine:
             print(f"\n{bold('Simulation complete!')}"
                   "\nClose the GUI window to exit.")
 
-            while True:
+            running: bool = True
+            while running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit(0)
+                        running = False
 
                 self._display.render_frame()
                 clock.tick(30)
+            pygame.quit()
 
         else:
             raise SimulationError()
