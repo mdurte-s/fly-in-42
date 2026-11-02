@@ -34,6 +34,17 @@ class SimulationGUI:
             width: int = 1100, height: int = 700,
             animation_speed: float = 0.5
             ) -> None:
+        """Initialize the Pygame GUI for simulation rendering.
+
+        Args:
+            cfg (Config): Parsed map configuration holding hubs and
+                connections.
+            drones (list[Drone]): List of active drones to render.
+            width (int): Initial window width in pixels (default: 1100).
+            height (int): Initial window height in pixels (default: 700).
+            animation_speed (float): Seconds per turn animation
+                (default: 0.5).
+        """
         pygame.init()
         pygame.font.init()
 

@@ -90,7 +90,7 @@ class Hub():
         """Increase the occupancy counter for the current hub.
 
         Args:
-            increament (int): Usage increment amount (default: 1).
+            occupancy (int): Usage increment amount (default: 1).
         """
         self._occupancy += occupancy
 
@@ -98,7 +98,7 @@ class Hub():
         """Decrease the occupancy counter for the current hub.
 
         Args:
-            decreament (int): Usage increment amount (default: 1).
+            occupancy (int): Usage decrement amount (default: 1).
         """
         self._occupancy -= occupancy
 
@@ -106,7 +106,7 @@ class Hub():
         """Increase the spots_reserved counter for the current hub.
 
         Args:
-            increament (int): Usage increment amount (default: 1).
+            spots_reserved (int): Usage increment amount (default: 1).
         """
         self._spots_reserved += spots_reserved
 
@@ -114,6 +114,6 @@ class Hub():
         """Decrease the spots_reserved counter for the current hub.
 
         Args:
-            decreament (int): Usage increment amount (default: 1).
+            spots_reserved (int): Usage decrement amount (default: 1).
         """
         self._spots_reserved -= spots_reserved

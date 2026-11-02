@@ -20,6 +20,7 @@ class SimulationEngine:
         Args:
             cfg (Config): Parsed map configuration.
             enable_gui (bool): Whether to initialize and display Pygame GUI.
+            statistics (bool): Whether to print statistics after simulation.
 
         Raises:
             SimulationError: If start or end hubs are not defined.
@@ -182,6 +183,8 @@ class SimulationEngine:
 
         Args:
             drone (Drone): The active drone completing its move.
+            reserved (bool): Whether a spot was pre-reserved in the target hub
+                (default: False).
 
         Raises:
             SimulationError: If target hub is invalid or undefined.

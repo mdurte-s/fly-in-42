@@ -35,7 +35,7 @@ class PathFinder:
     def find_paths(
             self, start_name: str, end_name: str, max_paths: int
             ) -> list[list[Hub]]:
-        """Find multiple candidate paths using Dijkstra with iterativ
+        """Find multiple candidate paths using Dijkstra with iterative
         penalties.
 
         Args:

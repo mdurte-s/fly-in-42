@@ -158,6 +158,19 @@ class Config():
             )
 
     def _hub_optional_criteria(self, optional: list[str]) -> dict[str, Any]:
+        """Parse and validate optional key=value fields for a hub definition.
+
+        Args:
+            optional (list[str]): Tokenized optional fields (e.g.
+                ['zone=restricted', 'color=blue']).
+
+        Returns:
+            dict[str, Any]: Mapping of validated option keys to their values.
+
+        Raises:
+            ConfigError: If an unknown, duplicate, or malformed option is
+            found.
+        """
 
         CRITERIA: dict[str, Callable[[str], Any]] = {
                 "zone": self._to_zone,
@@ -180,6 +193,19 @@ class Config():
         return params
 
     def _con_optional_criteria(self, optional: list[str]) -> dict[str, Any]:
+        """Parse and validate optional key=value fields for a connection.
+
+        Args:
+            optional (list[str]): Tokenized optional fields (e.g.
+                ['max_link_capacity=2']).
+
+        Returns:
+            dict[str, Any]: Mapping of validated option keys to their values.
+
+        Raises:
+            ConfigError: If an unknown, duplicate, or malformed option is
+            found.
+        """
 
         CRITERIA: dict[str, Callable[[str], Any]] = {
                 "max_link_capacity": lambda val: self.to_int(val, 1, True)
@@ -245,6 +271,17 @@ class Config():
                     line=self._current_line)
 
     def _to_name(self, info: str) -> str:
+        """Validate and return a hub name, rejecting spaces and dashes.
+
+        Args:
+            info (str): Raw name string to validate.
+
+        Returns:
+            str: The validated name.
+
+        Raises:
+            ConfigError: If the name contains a space or dash.
+        """
 
         if " " in info or "-" in info:
 
@@ -258,6 +295,17 @@ class Config():
         return info
 
     def _to_zone(self, info: str) -> str:
+        """Validate and return a zone type string.
+
+        Args:
+            info (str): Raw zone string to validate.
+
+        Returns:
+            str: The validated zone type.
+
+        Raises:
+            ConfigError: If the zone type is not one of the supported values.
+        """
 
         if info not in self._zones:
 
@@ -271,6 +319,17 @@ class Config():
         return info
 
     def _to_color(self, info: str) -> str:
+        """Validate and return a color string.
+
+        Args:
+            info (str): Raw color string to validate.
+
+        Returns:
+            str: The validated color string.
+
+        Raises:
+            ConfigError: If the color contains spaces or dashes.
+        """
 
         if " " in info or "-" in info:
             raise ConfigError(
@@ -283,24 +342,30 @@ class Config():
 
     @property
     def nb_drones(self) -> int:
+        """Return the number of drones for the simulation."""
         return self._nb_drones
 
     @property
     def hubs(self) -> list[Hub]:
+        """Return the list of all parsed hubs."""
         return self._hubs
 
     @property
     def connections(self) -> list[Connection]:
+        """Return the list of all parsed connections."""
         return self._connections
 
     @property
     def current_line(self) -> int:
+        """Return the current line number being parsed."""
         return self._current_line
 
     @property
     def start_hub(self) -> Optional[Hub]:
+        """Return the designated start hub, or None if not yet set."""
         return self._start_hub
 
     @property
     def end_hub(self) -> Optional[Hub]:
+        """Return the designated end hub, or None if not yet set."""
         return self._end_hub

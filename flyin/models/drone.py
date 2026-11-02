@@ -99,7 +99,7 @@ class Drone():
         """Increase the turns counter for the current drone.
 
         Args:
-            increament (int): Usage increment amount (default: 1).
+            turns (int): Usage increment amount (default: 1).
         """
         self._turns_count += turns
 

@@ -52,10 +52,16 @@ make run MAP=maps/medium/01_dead_end_trap.txt
 Run directly without the GUI:
 
 ```bash
-poetry run python main.py maps/easy/01_linear_path.txt --no-gui
+poetry run python main.py maps/easy/01_linear_path.txt
 ```
 
-The `--cli` and `-t` options are aliases for `--no-gui`. Map files are plain
+Run with the animated GUI:
+
+```bash
+poetry run python main.py maps/easy/01_linear_path.txt --gui
+```
+
+Map files are plain
 text: they define a positive drone count, a start hub, an end hub, optional
 intermediate hubs, and connections between defined hubs. Blank lines and
 lines beginning with `#` are ignored. Optional hub settings include
@@ -131,7 +137,7 @@ follow at a glance. Close the window after completion to exit.
 Run the included two-drone linear map in terminal mode:
 
 ```bash
-poetry run python main.py maps/easy/01_linear_path.txt --no-gui
+poetry run python main.py maps/easy/01_linear_path.txt
 ```
 
 The example has one route through `waypoint1` and `waypoint2`. Because each
