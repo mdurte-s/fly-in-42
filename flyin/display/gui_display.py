@@ -31,7 +31,7 @@ class SimulationGUI:
 
     def __init__(
             self, cfg: Config, drones: list[Drone],
-            width: int = 1200, height: int = 1000,
+            width: int = 1100, height: int = 700,
             animation_speed: float = 0.5
             ) -> None:
         pygame.init()
@@ -41,7 +41,7 @@ class SimulationGUI:
         self._width: int = max(self.MIN_WIDTH, min(width, self.MAX_WIDTH))
         self._height: int = max(self.MIN_HEIGHT, min(height, self.MAX_HEIGHT))
 
-        self._screen: pygame.Surface = pygame.display.set_mode(
+        self._screen: pygame.surface.Surface = pygame.display.set_mode(
             (self._width, self._height), pygame.RESIZABLE
         )
         pygame.display.set_caption("Fly-in Simulation")
@@ -278,11 +278,9 @@ class SimulationGUI:
             pos = self._map_to_screen(*hub.coordinates)
             hub_color = self._get_rgb_color(hub.color, self.COLOR_MAP["blue"])
 
-            # Outer boundary and filled circle
             pygame.draw.circle(self._screen, hub_color, pos, radius)
             pygame.draw.circle(self._screen, hub_color, pos, radius, 2)
 
-            # Only draw hub names if the window is large enough
             if show_names:
                 offset_pattern = [-32, 32, -44, 44]
                 y_offset = offset_pattern[i % len(offset_pattern)]
