@@ -3,7 +3,7 @@ PYTHON = python3
 MAIN = main.py
 MAP = maps/easy/01_linear_path.txt
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run display statistics debug clean lint lint-strict
 
 # Rule to install dependencies
 install:
@@ -14,11 +14,11 @@ install:
 run:
 	poetry run python $(MAIN) $(MAP)
 
-# Rule to execute the main program with GUI (accepts optional MAP argument: make run MAP=maps/...)
+# Rule to execute the main program with GUI (accepts optional MAP argument: make display AP=maps/...)
 display:
 	poetry run python $(MAIN) $(MAP) --gui
 
-# Rule to execute the main program with statistics (accepts optional MAP argument: make run MAP=maps/...)
+# Rule to execute the main program with statistics (accepts optional MAP argument: make statistics MAP=maps/...)
 statistics:
 	poetry run python $(MAIN) $(MAP) --statistics
 
