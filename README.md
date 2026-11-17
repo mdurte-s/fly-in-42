@@ -30,29 +30,14 @@
 
 ## 🎥 Simulation Visualization Demo
 
-<!-- ================================================================= -->
-<!-- 🎬 VIDEO INSERTION SECTION                                        -->
-<!-- Place your demo video file in assets/ or paste a hosted URL below -->
-<!-- ================================================================= -->
-
 <p align="center">
-  <video src="assets/flyin.mp4" width="85%" controls autoplay loop muted>
-    <p>Your browser does not support the video tag. Watch the demo video file at <code>assets/flyin_demo.mp4</code>.</p>
+  <video src="assets/flyin.mp4" width="85%" controls autoplay loop muted>V
   </video>
 </p>
 
 <p align="center">
   <em>Real-time visualization demonstrating multi-agent route execution, node capacity management, and restricted zone transit.</em>
 </p>
-
-> [!TIP]
-> **How to insert your video:**
-> - **GitHub Direct Upload (Recommended):** When editing this README on GitHub, drag and drop your `.mp4`, `.mov`, or `.webm` recording directly into the text editor. GitHub will host the video and generate a permanent URL you can paste into the `<video src="...">` tag above.
-> - **Local repository file:** Place your exported video at `assets/flyin_demo.mp4` (or `.webm`) in the repository root.
-> - **Animated GIF alternative:** To display an animated GIF instead, use:
->   ```markdown
->   ![Fly-in Simulation Demo](assets/flyin_demo.gif)
->   ```
 
 ### 🔍 Visualization Features in Action
 - **Adaptive Coordinate Mapping:** Window coordinates automatically normalize and re-scale based on hub Cartesian positions, preserving aspect ratios and adapting dynamically to window resizing (supports 800×600 up to 1920×1080).
