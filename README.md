@@ -30,10 +30,9 @@
 
 ## 🎥 Simulation Visualization Demo
 
-<p align="center">
-  <video src="assets/flyin.mp4" width="85%" controls autoplay loop muted>V
-  </video>
-</p>
+
+https://github.com/user-attachments/assets/30ace1e8-340b-4752-88db-8126e6ef5c21
+
 
 <p align="center">
   <em>Real-time visualization demonstrating multi-agent route execution, node capacity management, and restricted zone transit.</em>
