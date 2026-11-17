@@ -36,7 +36,7 @@
 <!-- ================================================================= -->
 
 <p align="center">
-  <video src="assets/flyin.webm" width="85%" controls autoplay loop muted>
+  <video src="assets/flyin.mp4" width="85%" controls autoplay loop muted>
     <p>Your browser does not support the video tag. Watch the demo video file at <code>assets/flyin_demo.mp4</code>.</p>
   </video>
 </p>
